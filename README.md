@@ -36,7 +36,7 @@
 
 ## Model Provider
 
-This project is configured to use the Google Gemini API directly through the AI SDK Google provider. The active chat and title model is configured in `lib/ai/models.ts` as `gemini-3.1-flash`.
+This project is configured to use the Google Gemini API directly through the AI SDK Google provider. The active chat and title model is configured in `lib/ai/models.ts` as `gemini-3.5-flash`, which is available in the Gemini API model list.
 
 Set `GEMINI_API_KEY` in your environment. The provider also supports `GOOGLE_GENERATIVE_AI_API_KEY` as a fallback variable name.
 
@@ -54,7 +54,7 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 
 1. Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey)
 2. Add it to `.env.local` as `GEMINI_API_KEY=...`
-3. Install dependencies and refresh the lockfile
+3. Install dependencies
 
 ```bash
 pnpm install

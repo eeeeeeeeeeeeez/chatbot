@@ -1,8 +1,8 @@
-export const DEFAULT_CHAT_MODEL = "gemini-3.1-flash";
+export const DEFAULT_CHAT_MODEL = "gemini-3.5-flash";
 
 export const titleModel = {
-  id: "gemini-3.1-flash",
-  name: "Gemini 3.1 Flash",
+  id: "gemini-3.5-flash",
+  name: "Gemini 3.5 Flash",
   provider: "google",
   description: "Fast Gemini model for title generation",
 };
@@ -22,8 +22,8 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "gemini-3.1-flash",
-    name: "Gemini 3.1 Flash",
+    id: "gemini-3.5-flash",
+    name: "Gemini 3.5 Flash",
     provider: "google",
     description: "Fast Gemini model with tool use and multimodal input",
   },
@@ -35,7 +35,7 @@ export async function getCapabilities(): Promise<
   return Object.fromEntries(
     chatModels.map((model) => [
       model.id,
-      { tools: true, vision: true, reasoning: true },
+      { tools: true, vision: true, reasoning: false },
     ])
   );
 }
@@ -53,7 +53,11 @@ export async function getAllGatewayModels(): Promise<
 
   return chatModels.map((model) => ({
     ...model,
-    capabilities: capabilities[model.id],
+    capabilities: capabilities[model.id] ?? {
+      tools: true,
+      vision: true,
+      reasoning: false,
+    },
   }));
 }
 

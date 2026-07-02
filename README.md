@@ -10,7 +10,7 @@
 <p align="center">
   <a href="https://chatbot.ai-sdk.dev/docs"><strong>Read Docs</strong></a> ·
   <a href="#features"><strong>Features</strong></a> ·
-  <a href="#model-providers"><strong>Model Providers</strong></a> ·
+  <a href="#model-provider"><strong>Model Provider</strong></a> ·
   <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
   <a href="#running-locally"><strong>Running locally</strong></a>
 </p>
@@ -24,7 +24,7 @@
 - [AI SDK](https://ai-sdk.dev/docs/introduction)
   - Unified API for generating text, structured objects, and tool calls with LLMs
   - Hooks for building dynamic chat and generative user interfaces
-  - Supports OpenAI, Anthropic, Google, xAI, and other model providers via AI Gateway
+  - Uses the Google Gemini API directly through `@ai-sdk/google`
 - [shadcn/ui](https://ui.shadcn.com)
   - Styling with [Tailwind CSS](https://tailwindcss.com)
   - Component primitives from [Radix UI](https://radix-ui.com) for accessibility and flexibility
@@ -34,17 +34,11 @@
 - [Auth.js](https://authjs.dev)
   - Simple and secure authentication
 
-## Model Providers
+## Model Provider
 
-This template uses the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access multiple AI models through a unified interface. Models are configured in `lib/ai/models.ts` with per-model provider routing. Included models: Mistral, Moonshot, DeepSeek, OpenAI, and xAI.
+This project is configured to use the Google Gemini API directly through the AI SDK Google provider. The active chat and title model is configured in `lib/ai/models.ts` as `gemini-3.1-flash`.
 
-### AI Gateway Authentication
-
-**For Vercel deployments**: Authentication is handled automatically via OIDC tokens.
-
-**For non-Vercel deployments**: You need to provide an AI Gateway API key by setting the `AI_GATEWAY_API_KEY` environment variable in your `.env.local` file.
-
-With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to direct LLM providers like [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://ai-sdk.dev/providers/ai-sdk-providers) with just a few lines of code.
+Set `GEMINI_API_KEY` in your environment. The provider also supports `GOOGLE_GENERATIVE_AI_API_KEY` as a fallback variable name.
 
 ## Deploy Your Own
 
@@ -58,9 +52,9 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 
 > Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
 
-1. Install Vercel CLI: `npm i -g vercel`
-2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
-3. Download your environment variables: `vercel env pull`
+1. Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Add it to `.env.local` as `GEMINI_API_KEY=...`
+3. Install dependencies and refresh the lockfile
 
 ```bash
 pnpm install

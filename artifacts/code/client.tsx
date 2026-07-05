@@ -114,8 +114,8 @@ export const codeArtifact = new Artifact<"code", Metadata>({
   actions: [
     {
       icon: <PlayIcon size={18} />,
-      label: "Run",
-      description: "Execute code",
+      label: "執行",
+      description: "執行程式碼",
       onClick: async ({ content, setMetadata }) => {
         const runId = generateUUID();
         const outputContent: ConsoleOutputContent[] = [];
@@ -216,7 +216,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     },
     {
       icon: <UndoIcon size={18} />,
-      description: "View Previous version",
+      description: "檢視上一版本",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("prev");
       },
@@ -230,7 +230,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     },
     {
       icon: <RedoIcon size={18} />,
-      description: "View Next version",
+      description: "檢視下一版本",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("next");
       },
@@ -244,17 +244,17 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     },
     {
       icon: <CopyIcon size={18} />,
-      description: "Copy code to clipboard",
+      description: "複製程式碼到剪貼簿",
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
-        toast.success("Copied to clipboard!");
+        toast.success("已複製到剪貼簿！");
       },
     },
   ],
   toolbar: [
     {
       icon: <MessageIcon />,
-      description: "Add comments",
+      description: "新增註解",
       onClick: ({ sendMessage }) => {
         sendMessage({
           role: "user",
@@ -269,7 +269,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     },
     {
       icon: <LogsIcon />,
-      description: "Add logs",
+      description: "新增紀錄",
       onClick: ({ sendMessage }) => {
         sendMessage({
           role: "user",

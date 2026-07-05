@@ -40,7 +40,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
   actions: [
     {
       icon: <UndoIcon size={18} />,
-      description: "View Previous version",
+      description: "檢視上一版本",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("prev");
       },
@@ -54,7 +54,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     },
     {
       icon: <RedoIcon size={18} />,
-      description: "View Next version",
+      description: "檢視下一版本",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("next");
       },
@@ -68,7 +68,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     },
     {
       icon: <CopyIcon />,
-      description: "Copy as .csv",
+      description: "複製為 .csv",
       onClick: ({ content }) => {
         const parsed = parse<string[]>(content, { skipEmptyLines: true });
 
@@ -79,13 +79,13 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
         const cleanedCsv = unparse(nonEmptyRows);
 
         navigator.clipboard.writeText(cleanedCsv);
-        toast.success("Copied csv to clipboard!");
+        toast.success("已將 CSV 複製到剪貼簿！");
       },
     },
   ],
   toolbar: [
     {
-      description: "Format and clean data",
+      description: "格式化並清理資料",
       icon: <SparklesIcon />,
       onClick: ({ sendMessage }) => {
         sendMessage({
@@ -97,7 +97,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
       },
     },
     {
-      description: "Analyze and visualize data",
+      description: "分析並視覺化資料",
       icon: <LineChartIcon />,
       onClick: ({ sendMessage }) => {
         sendMessage({

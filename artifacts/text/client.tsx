@@ -102,7 +102,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
   actions: [
     {
       icon: <ClockRewind size={18} />,
-      description: "View changes",
+      description: "顯示變更",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("toggle");
       },
@@ -116,7 +116,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     },
     {
       icon: <UndoIcon size={18} />,
-      description: "View Previous version",
+      description: "檢視上一版本",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("prev");
       },
@@ -130,7 +130,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     },
     {
       icon: <RedoIcon size={18} />,
-      description: "View Next version",
+      description: "檢視下一版本",
       onClick: ({ handleVersionChange }) => {
         handleVersionChange("next");
       },
@@ -144,17 +144,17 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     },
     {
       icon: <CopyIcon size={18} />,
-      description: "Copy to clipboard",
+      description: "複製到剪貼簿",
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
-        toast.success("Copied to clipboard!");
+        toast.success("已複製到剪貼簿！");
       },
     },
   ],
   toolbar: [
     {
       icon: <PenIcon />,
-      description: "Add final polish",
+      description: "潤飾內容",
       onClick: ({ sendMessage }) => {
         sendMessage({
           role: "user",
@@ -169,7 +169,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     },
     {
       icon: <MessageIcon />,
-      description: "Request suggestions",
+      description: "請求建議",
       onClick: ({ sendMessage }) => {
         sendMessage({
           role: "user",

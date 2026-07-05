@@ -50,19 +50,15 @@ function PureChatHeader({
         />
       )}
 
-      <Button
-        asChild
-        className="hidden rounded-lg bg-foreground px-4 text-background hover:bg-foreground/90 md:ml-auto md:flex"
+      <Link
+        href="https://lin.ee/XrjcRfb"
+        rel="noopener noreferrer"
+        target="_blank"
+        className="hidden items-center gap-2 px-3 py-1.5 transition-colors hover:opacity-80 md:ml-auto md:flex"
       >
-        <Link
-          href="https://lin.ee/XrjcRfb"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          <img src="/icon-32x32.png" alt="Hengbo AI" className="mr-2 size-4" />
-          Hengbo AI
-        </Link>
-      </Button>
+        <img src="/icon-32x32.png" alt="Hengbo AI" className="size-5" />
+        <span className="text-sm font-medium text-foreground">Hengbo AI</span>
+      </Link>
     </header>
   );
 }

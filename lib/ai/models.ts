@@ -1,7 +1,7 @@
-export const DEFAULT_CHAT_MODEL = "gemini-3.5-flash";
+export const DEFAULT_CHAT_MODEL = "gemini-3.1-flash-lite";
 
 export const titleModel = {
-  id: "gemini-3.5-flash",
+  id: "gemini-3.1-flash-lite",
   name: "Tvivl 1.5 Beta",
   provider: "google",
   description: "Fast Tvivl model for title generation",
@@ -22,7 +22,7 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "gemini-3.5-flash",
+    id: "gemini-3.1-flash-lite",
     name: "Tvivl 1.5 Beta",
     provider: "google",
     description: "Fast Tvivl model with tool use and multimodal input",

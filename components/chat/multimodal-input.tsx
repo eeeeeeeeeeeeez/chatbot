@@ -652,7 +652,7 @@ function PureModelSelectorCompact({
 
   // Force local name for specific model to bypass API cache issues
   const displayName =
-    selectedModel.id === "gemini-3.5-flash"
+    selectedModel.id === "gemini-3.1-flash-lite"
       ? "Tvivl 1.5 Beta"
       : selectedModel.name;
 

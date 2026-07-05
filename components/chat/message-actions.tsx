@@ -39,12 +39,12 @@ export function PureMessageActions({
 
   const handleCopy = async () => {
     if (!textFromParts) {
-      toast.error("There's no text to copy!");
+      toast.error("沒有可複製的文字！");
       return;
     }
 
     await copyToClipboard(textFromParts);
-    toast.success("Copied to clipboard!");
+    toast.success("已複製到剪貼簿！");
   };
 
   if (message.role === "user") {
@@ -56,7 +56,7 @@ export function PureMessageActions({
               className="size-7 text-muted-foreground/50 hover:text-foreground"
               data-testid="message-edit-button"
               onClick={onEdit}
-              tooltip="Edit"
+              tooltip="編輯"
             >
               <PencilEditIcon />
             </Action>
@@ -64,7 +64,7 @@ export function PureMessageActions({
           <Action
             className="size-7 text-muted-foreground/50 hover:text-foreground"
             onClick={handleCopy}
-            tooltip="Copy"
+            tooltip="複製"
           >
             <CopyIcon />
           </Action>
@@ -78,7 +78,7 @@ export function PureMessageActions({
       <Action
         className="text-muted-foreground/50 hover:text-foreground"
         onClick={handleCopy}
-        tooltip="Copy"
+        tooltip="複製"
       >
         <CopyIcon />
       </Action>
@@ -101,7 +101,7 @@ export function PureMessageActions({
           );
 
           toast.promise(upvote, {
-            loading: "Upvoting Response...",
+            loading: "正在為回應按讚…",
             success: () => {
               mutate<Vote[]>(
                 `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`,
@@ -126,12 +126,12 @@ export function PureMessageActions({
                 { revalidate: false }
               );
 
-              return "Upvoted Response!";
+              return "已為回應按讚！";
             },
-            error: "Failed to upvote response.",
+            error: "為回應按讚失敗。",
           });
         }}
-        tooltip="Upvote Response"
+        tooltip="為回應按讚"
       >
         <ThumbUpIcon />
       </Action>
@@ -154,7 +154,7 @@ export function PureMessageActions({
           );
 
           toast.promise(downvote, {
-            loading: "Downvoting Response...",
+            loading: "正在為回應倒讚…",
             success: () => {
               mutate<Vote[]>(
                 `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`,
@@ -179,12 +179,12 @@ export function PureMessageActions({
                 { revalidate: false }
               );
 
-              return "Downvoted Response!";
+              return "已為回應倒讚！";
             },
-            error: "Failed to downvote response.",
+            error: "為回應倒讚失敗。",
           });
         }}
-        tooltip="Downvote Response"
+        tooltip="為回應倒讚"
       >
         <ThumbDownIcon />
       </Action>

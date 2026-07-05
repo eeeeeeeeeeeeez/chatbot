@@ -57,7 +57,7 @@ export const VersionFooter = ({
             <ChevronLeftIcon className="size-4" />
           </button>
           <span className="min-w-[4rem] text-center text-xs tabular-nums text-muted-foreground">
-            {currentVersionIndex + 1} of {documents.length}
+            第 {currentVersionIndex + 1} 個，共 {documents.length} 個
           </span>
           <button
             className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
@@ -75,7 +75,7 @@ export const VersionFooter = ({
             mode === "diff" && "bg-muted text-foreground"
           )}
           onClick={() => setMode(mode === "diff" ? "edit" : "diff")}
-          title="Show changes"
+          title="顯示變更"
           type="button"
         >
           <DiffIcon className="size-4" />
@@ -125,7 +125,7 @@ export const VersionFooter = ({
           }}
           type="button"
         >
-          Restore
+          還原
           {isMutating && (
             <div className="animate-spin">
               <LoaderIcon size={14} />
@@ -140,7 +140,7 @@ export const VersionFooter = ({
           }}
           type="button"
         >
-          Latest
+          最新版本
         </button>
       </div>
     </motion.div>

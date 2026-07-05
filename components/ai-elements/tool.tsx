@@ -46,13 +46,13 @@ export type ToolHeaderProps = {
 );
 
 const statusLabels: Record<ToolPart["state"], string> = {
-  "approval-requested": "Awaiting Approval",
-  "approval-responded": "Responded",
-  "input-available": "Running",
-  "input-streaming": "Pending",
-  "output-available": "Completed",
-  "output-denied": "Denied",
-  "output-error": "Error",
+  "approval-requested": "等待核准",
+  "approval-responded": "已回應",
+  "input-available": "執行中",
+  "input-streaming": "等待中",
+  "output-available": "已完成",
+  "output-denied": "已拒絕",
+  "output-error": "錯誤",
 };
 
 const statusIcons: Record<ToolPart["state"], ReactNode> = {
@@ -156,7 +156,7 @@ export const ToolOutput = ({
   return (
     <div className={cn("space-y-2", className)} {...props}>
       <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {errorText ? "Error" : "Result"}
+        {errorText ? "錯誤" : "結果"}
       </h4>
       <div
         className={cn(

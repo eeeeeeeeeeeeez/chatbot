@@ -66,7 +66,7 @@ export class ChatbotError extends Error {
       });
 
       return Response.json(
-        { code: "", message: "Something went wrong. Please try again later." },
+        { code: "", message: "發生錯誤，請稍後再試。" },
         { status: statusCode }
       );
     }
@@ -77,43 +77,43 @@ export class ChatbotError extends Error {
 
 export function getMessageByErrorCode(errorCode: ErrorCode): string {
   if (errorCode.includes("database")) {
-    return "An error occurred while executing a database query.";
+    return "執行資料庫查詢時發生錯誤。";
   }
 
   switch (errorCode) {
     case "bad_request:api":
-      return "The request couldn't be processed. Please check your input and try again.";
+      return "無法處理此請求，請確認您的輸入內容後再試一次。";
 
     case "bad_request:activate_gateway":
-      return "AI Gateway requires a valid credit card on file to service requests. Please visit https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card to add a card and unlock your free credits.";
+      return "AI Gateway 需要一張有效的信用卡才能提供服務。請前往 https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card 新增卡片以解鎖您的免費額度。";
 
     case "unauthorized:auth":
-      return "You need to sign in before continuing.";
+      return "請先登入才能繼續。";
     case "forbidden:auth":
-      return "Your account does not have access to this feature.";
+      return "您的帳號沒有存取此功能的權限。";
 
     case "rate_limit:chat":
-      return "You've reached the message limit. Come back in 1 hour to continue chatting.";
+      return "您已達到訊息數量上限，請於 1 小時後再回來繼續對話。";
     case "not_found:chat":
-      return "The requested chat was not found. Please check the chat ID and try again.";
+      return "找不到指定的對話，請確認對話 ID 後再試一次。";
     case "forbidden:chat":
-      return "This chat belongs to another user. Please check the chat ID and try again.";
+      return "此對話屬於其他使用者，請確認對話 ID 後再試一次。";
     case "unauthorized:chat":
-      return "You need to sign in to view this chat. Please sign in and try again.";
+      return "您需要登入才能檢視此對話，請登入後再試一次。";
     case "offline:chat":
-      return "We're having trouble sending your message. Please check your internet connection and try again.";
+      return "傳送訊息時發生問題，請檢查您的網路連線後再試一次。";
 
     case "not_found:document":
-      return "The requested document was not found. Please check the document ID and try again.";
+      return "找不到指定的文件，請確認文件 ID 後再試一次。";
     case "forbidden:document":
-      return "This document belongs to another user. Please check the document ID and try again.";
+      return "此文件屬於其他使用者，請確認文件 ID 後再試一次。";
     case "unauthorized:document":
-      return "You need to sign in to view this document. Please sign in and try again.";
+      return "您需要登入才能檢視此文件，請登入後再試一次。";
     case "bad_request:document":
-      return "The request to create or update the document was invalid. Please check your input and try again.";
+      return "建立或更新文件的請求無效，請確認您的輸入內容後再試一次。";
 
     default:
-      return "Something went wrong. Please try again later.";
+      return "發生錯誤，請稍後再試。";
   }
 }
 

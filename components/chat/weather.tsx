@@ -370,15 +370,15 @@ export function Weather({
 
           <div className="text-right">
             <div className="font-medium text-white/90 text-xs">
-              H: {n(currentHigh)}°
+              高：{n(currentHigh)}°
             </div>
-            <div className="text-white/70 text-xs">L: {n(currentLow)}°</div>
+            <div className="text-white/70 text-xs">低：{n(currentLow)}°</div>
           </div>
         </div>
 
         <div className="rounded-xl bg-white/10 p-3 backdrop-blur-sm">
           <div className="mb-2 font-medium text-white/80 text-xs">
-            Hourly Forecast
+            每小時預報
           </div>
           <div className="flex justify-between gap-1">
             {displayTimes.map((time, index) => {
@@ -397,7 +397,7 @@ export function Weather({
                   key={time}
                 >
                   <div className="font-medium text-white/70 text-xs">
-                    {index === 0 ? "Now" : format(hourTime, "ha")}
+                    {index === 0 ? "現在" : format(hourTime, "ha")}
                   </div>
 
                   <div

@@ -139,12 +139,12 @@ const ReadingLevelSelector = ({
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
 }) => {
   const LEVELS = [
-    "Elementary",
-    "Middle School",
-    "Keep current level",
-    "High School",
-    "College",
-    "Graduate",
+    "小學",
+    "國中",
+    "維持目前程度",
+    "高中",
+    "大學",
+    "研究所",
   ];
 
   const y = useMotionValue(-40 * 2);
@@ -201,7 +201,7 @@ const ReadingLevelSelector = ({
                     parts: [
                       {
                         type: "text",
-                        text: `Please adjust the reading level to ${LEVELS[currentLevel]} level.`,
+                        text: `請將閱讀程度調整為「${LEVELS[currentLevel]}」。`,
                       },
                     ],
                   });
@@ -281,7 +281,7 @@ const createFixErrorTool = (
   documentId?: string
 ): ArtifactToolbarItem => ({
   icon: <WrenchIcon className="size-4" />,
-  description: "Fix error",
+  description: "修正錯誤",
   onClick: ({ sendMessage: send }) => {
     send({
       role: "user",

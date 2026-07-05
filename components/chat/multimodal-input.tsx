@@ -163,7 +163,7 @@ function PureMultimodalInput({
         setMessages(() => []);
         break;
       case "rename":
-        toast("Rename is available from the sidebar chat menu.");
+        toast("重新命名功能可於側邊欄的對話選單中使用。");
         break;
       case "model": {
         const modelBtn = document.querySelector<HTMLButtonElement>(
@@ -176,30 +176,30 @@ function PureMultimodalInput({
         setTheme(resolvedTheme === "dark" ? "light" : "dark");
         break;
       case "delete":
-        toast("Delete this chat?", {
+        toast("要刪除此對話嗎？", {
           action: {
-            label: "Delete",
+            label: "刪除",
             onClick: () => {
               fetch(
                 `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/chat?id=${chatId}`,
                 { method: "DELETE" }
               );
               router.push("/");
-              toast.success("Chat deleted");
+              toast.success("對話已刪除");
             },
           },
         });
         break;
       case "purge":
-        toast("Delete all chats?", {
+        toast("要刪除所有對話嗎？", {
           action: {
-            label: "Delete all",
+            label: "全部刪除",
             onClick: () => {
               fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history`, {
                 method: "DELETE",
               });
               router.push("/");
-              toast.success("All chats deleted");
+              toast.success("所有對話已刪除");
             },
           },
         });
@@ -282,7 +282,7 @@ function PureMultimodalInput({
       const { error } = await response.json();
       toast.error(error);
     } catch (_error) {
-      toast.error("Failed to upload file, please try again!");
+      toast.error("檔案上傳失敗，請再試一次！");
     }
   }, []);
 
@@ -304,7 +304,7 @@ function PureMultimodalInput({
           ...successfullyUploadedAttachments,
         ]);
       } catch (_error) {
-        toast.error("Failed to upload files");
+        toast.error("檔案上傳失敗");
       } finally {
         setUploadQueue([]);
       }
@@ -329,7 +329,7 @@ function PureMultimodalInput({
 
       event.preventDefault();
 
-      setUploadQueue((prev) => [...prev, "Pasted image"]);
+      setUploadQueue((prev) => [...prev, "已貼上的圖片"]);
 
       try {
         const uploadPromises = imageItems
@@ -350,7 +350,7 @@ function PureMultimodalInput({
           ...(successfullyUploadedAttachments as Attachment[]),
         ]);
       } catch (_error) {
-        toast.error("Failed to upload pasted image(s)");
+        toast.error("貼上的圖片上傳失敗");
       } finally {
         setUploadQueue([]);
       }
@@ -372,7 +372,7 @@ function PureMultimodalInput({
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {editingMessage && onCancelEdit && (
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-          <span>Editing message</span>
+          <span>正在編輯訊息</span>
           <button
             className="rounded px-1.5 py-0.5 text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
             onMouseDown={(e) => {
@@ -435,7 +435,7 @@ function PureMultimodalInput({
           if (status === "ready" || status === "error") {
             submitForm();
           } else {
-            toast.error("Please wait for the model to finish its response!");
+            toast.error("請等待模型完成回應！");
           }
         }}
       >
@@ -510,7 +510,7 @@ function PureMultimodalInput({
             }
           }}
           placeholder={
-            editingMessage ? "Edit your message..." : "Ask anything..."
+            editingMessage ? "編輯您的訊息…" : "輸入任何問題…"
           }
           ref={textareaRef}
           value={input}
@@ -664,7 +664,7 @@ function PureModelSelectorCompact({
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>
-        <ModelSelectorInput placeholder="Search models..." />
+        <ModelSelectorInput placeholder="搜尋模型…" />
         <ModelSelectorList>
           {(() => {
             const curatedIds = new Set(chatModels.map((m) => m.id));

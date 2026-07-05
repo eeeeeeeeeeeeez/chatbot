@@ -10,13 +10,13 @@ const getActionText = (
 ) => {
   switch (type) {
     case "create":
-      return tense === "present" ? "Creating" : "Created";
+      return tense === "present" ? "正在建立" : "已建立";
     case "update":
-      return tense === "present" ? "Updating" : "Updated";
+      return tense === "present" ? "正在更新" : "已更新";
     case "request-suggestions":
       return tense === "present"
-        ? "Adding suggestions"
-        : "Added suggestions to";
+        ? "正在新增建議"
+        : "已新增建議至";
     default:
       return null;
   }
@@ -41,7 +41,7 @@ function PureDocumentToolResult({
       onClick={(event) => {
         if (isReadonly) {
           toast.error(
-            "Viewing files in shared chats is currently not supported."
+            "目前不支援在共用對話中檢視檔案。"
           );
           return;
         }
@@ -77,7 +77,7 @@ function PureDocumentToolResult({
         ) : null}
       </div>
       <div className="text-left">
-        {`${getActionText(type, "past")} "${result.title}"`}
+        {`${getActionText(type, "past")}「${result.title}」`}
       </div>
     </button>
   );
@@ -107,7 +107,7 @@ function PureDocumentToolCall({
       onClick={(event) => {
         if (isReadonly) {
           toast.error(
-            "Viewing files in shared chats is currently not supported."
+            "目前不支援在共用對話中檢視檔案。"
           );
           return;
         }
@@ -141,13 +141,13 @@ function PureDocumentToolCall({
         </div>
 
         <div className="text-left">
-          {`${getActionText(type, "present")} ${
+          {`${getActionText(type, "present")}${
             type === "create" && "title" in args && args.title
-              ? `"${args.title}"`
+              ? `「${args.title}」`
               : type === "update" && "description" in args
-                ? `"${args.description}"`
+                ? `「${args.description}」`
                 : type === "request-suggestions"
-                  ? "for document"
+                  ? "文件"
                   : ""
           }`}
         </div>

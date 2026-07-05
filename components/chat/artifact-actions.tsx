@@ -65,7 +65,7 @@ function PureArtifactActions({
                   "disabled:pointer-events-none disabled:opacity-30",
                   {
                     "text-foreground":
-                      mode === "diff" && action.description === "View changes",
+                      mode === "diff" && action.description === "顯示變更",
                   }
                 )}
                 disabled={disabled}
@@ -75,7 +75,7 @@ function PureArtifactActions({
                   try {
                     await Promise.resolve(action.onClick(actionContext));
                   } catch (_error) {
-                    toast.error("Failed to execute action");
+                    toast.error("執行動作失敗");
                   } finally {
                     setIsLoading(false);
                   }

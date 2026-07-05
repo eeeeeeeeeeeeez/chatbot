@@ -40,7 +40,7 @@ function PureChatHeader({
         rel="noopener noreferrer"
         target="_blank"
       >
-        <img src="/icon-32x32.png" alt="Hengbo AI" className="size-4" />
+        <img src="/icon-32x32.png" alt="Hengbo AI" className="size-6" />
       </Link>
 
       {!isReadonly && (
@@ -54,9 +54,9 @@ function PureChatHeader({
         href="https://lin.ee/XrjcRfb"
         rel="noopener noreferrer"
         target="_blank"
-        className="hidden items-center gap-2 px-3 py-1.5 transition-colors hover:opacity-80 md:ml-auto md:flex"
+        className="hidden items-center gap-3 px-3 py-1.5 transition-colors hover:opacity-80 md:ml-auto md:flex"
       >
-        <img src="/icon-32x32.png" alt="Hengbo AI" className="size-5" />
+        <img src="/icon-32x32.png" alt="Hengbo AI" className="size-7" />
         <span className="text-sm font-medium text-foreground">Hengbo AI</span>
       </Link>
     </header>

@@ -4,7 +4,7 @@ export const titleModel = {
   id: "gemini-3.5-flash",
   name: "Tvivl 1.5 Beta",
   provider: "google",
-  description: "Fast Gemini model for title generation",
+  description: "Fast Tvivl model for title generation",
 };
 
 export type ModelCapabilities = {
@@ -25,7 +25,7 @@ export const chatModels: ChatModel[] = [
     id: "gemini-3.5-flash",
     name: "Tvivl 1.5 Beta",
     provider: "google",
-    description: "Fast Gemini model with tool use and multimodal input",
+    description: "Fast Tvivl model with tool use and multimodal input",
   },
 ];
 

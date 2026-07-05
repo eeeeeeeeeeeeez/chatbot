@@ -158,14 +158,14 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
     },
     onError: (error) => {
-      if (error.message?.includes("AI Gateway requires a valid credit card")) {
+      if (error.message?.includes("AI Gateway 需要一張有效的信用卡")) {
         setShowCreditCardAlert(true);
       } else if (error instanceof ChatbotError) {
         toast({ type: "error", description: error.message });
       } else {
         toast({
           type: "error",
-          description: error.message || "Oops, an error occurred!",
+          description: error.message || "糟糕，發生錯誤了！",
         });
       }
     },

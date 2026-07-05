@@ -2,7 +2,7 @@ export const DEFAULT_CHAT_MODEL = "gemini-3.5-flash";
 
 export const titleModel = {
   id: "gemini-3.5-flash",
-  name: "Gemini 3.5 Flash",
+  name: "Tvivl 1.5 Beta",
   provider: "google",
   description: "Fast Gemini model for title generation",
 };
@@ -23,7 +23,7 @@ export type ChatModel = {
 export const chatModels: ChatModel[] = [
   {
     id: "gemini-3.5-flash",
-    name: "Gemini 3.5 Flash",
+    name: "Tvivl 1.5 Beta",
     provider: "google",
     description: "Fast Gemini model with tool use and multimodal input",
   },

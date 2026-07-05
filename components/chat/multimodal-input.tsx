@@ -769,7 +769,11 @@ function PureModelSelectorCompact({
                       value={model.id}
                     >
                       <ModelSelectorLogo provider={logoProvider} />
-                      <ModelSelectorName>{model.name}</ModelSelectorName>
+                      <ModelSelectorName>
+                        {model.id === "gemini-3.1-flash-lite"
+                          ? "Tvivl 1.5 Beta"
+                          : model.name}
+                      </ModelSelectorName>
                       <div className="ml-auto flex items-center gap-2 text-foreground/70">
                         {capabilities?.[model.id]?.tools && (
                           <WrenchIcon className="size-3.5" />

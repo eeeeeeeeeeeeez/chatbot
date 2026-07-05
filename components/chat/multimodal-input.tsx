@@ -649,6 +649,13 @@ function PureModelSelectorCompact({
     activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
     activeModels.find((m: ChatModel) => m.id === DEFAULT_CHAT_MODEL) ??
     activeModels[0];
+
+  // Force local name for specific model to bypass API cache issues
+  const displayName =
+    selectedModel.id === "gemini-3.5-flash"
+      ? "Tvivl 1.5 Beta"
+      : selectedModel.name;
+
   const [provider] = selectedModel.id.split("/");
 
   return (
@@ -660,7 +667,7 @@ function PureModelSelectorCompact({
           variant="ghost"
         >
           {provider && <ModelSelectorLogo provider={provider} />}
-          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+          <ModelSelectorName>{displayName}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>

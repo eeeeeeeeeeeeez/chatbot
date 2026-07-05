@@ -13,7 +13,7 @@ export const guestRegex = /^guest-\d+$/;
 export const DUMMY_PASSWORD = generateDummyPassword();
 
 export const suggestions = [
-  "今天有什麼我可以幫忙的？",
+  "如何制定一個高效的學習計劃？",
   "寫一段程式碼來展示 Dijkstra 演算法",
   "幫我寫一篇關於矽谷的文章",
   "台北市現在的天氣如何？",

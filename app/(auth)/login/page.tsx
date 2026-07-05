@@ -45,19 +45,19 @@ export default function Page() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">歡迎回來</h1>
       <p className="text-sm text-muted-foreground">
-        Sign in to your account to continue
+        登入您的帳戶以繼續
       </p>
       <AuthForm action={handleSubmit} defaultEmail={email}>
-        <SubmitButton isSuccessful={isSuccessful}>Sign in</SubmitButton>
+        <SubmitButton isSuccessful={isSuccessful}>登入</SubmitButton>
         <p className="text-center text-[13px] text-muted-foreground">
           {"No account? "}
           <Link
             className="text-foreground underline-offset-4 hover:underline"
             href="/register"
           >
-            Sign up
+            註冊
           </Link>
         </p>
       </AuthForm>

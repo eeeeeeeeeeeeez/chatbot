@@ -5,7 +5,7 @@ import Link from "next/link";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
-import { VercelIcon } from "./icons";
+
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
 function PureChatHeader({
@@ -36,11 +36,11 @@ function PureChatHeader({
 
       <Link
         className="flex size-8 items-center justify-center rounded-lg md:hidden"
-        href="https://vercel.com/templates/next.js/chatbot"
+        href="https://lin.ee/XrjcRfb"
         rel="noopener noreferrer"
         target="_blank"
       >
-        <VercelIcon size={14} />
+        <img src="/icon-32x32.png" alt="Hengbo AI" className="size-4" />
       </Link>
 
       {!isReadonly && (
@@ -55,12 +55,12 @@ function PureChatHeader({
         className="hidden rounded-lg bg-foreground px-4 text-background hover:bg-foreground/90 md:ml-auto md:flex"
       >
         <Link
-          href="https://vercel.com/templates/next.js/chatbot"
+          href="https://lin.ee/XrjcRfb"
           rel="noopener noreferrer"
           target="_blank"
         >
-          <VercelIcon size={16} />
-          Deploy with Vercel
+          <img src="/icon-32x32.png" alt="Hengbo AI" className="mr-2 size-4" />
+          Hengbo AI
         </Link>
       </Button>
     </header>

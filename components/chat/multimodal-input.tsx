@@ -715,7 +715,7 @@ function PureModelSelectorCompact({
               bytedance: "ByteDance",
               cohere: "Cohere",
               deepseek: "DeepSeek",
-              google: "Google",
+              google: "Hengbo AI",
               inception: "Inception",
               kwaipilot: "Kwaipilot",
               meituan: "Meituan",

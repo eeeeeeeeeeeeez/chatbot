@@ -295,6 +295,7 @@ function PureMultimodalInput({
           text,
         },
       ],
+      attachments,
     });
 
     setAttachments([]);
@@ -330,11 +331,11 @@ function PureMultimodalInput({
 
       if (response.ok) {
         const data = await response.json();
-        const { url, pathname, contentType, extractedText } = data;
+        const { url, name, contentType, extractedText } = data;
 
         return {
           url,
-          name: pathname,
+          name,
           contentType,
           extractedText,
         };

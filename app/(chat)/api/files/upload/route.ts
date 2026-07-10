@@ -236,7 +236,7 @@ export async function POST(request: Request) {
         ...data,
         contentType,
         extractedText,
-        pathname: file.name,
+        name: file.name,
       });
     } catch (_error) {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });

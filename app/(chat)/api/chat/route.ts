@@ -172,7 +172,7 @@ export async function POST(request: Request) {
             id: message.id,
             role: "user",
             parts: message.parts,
-            attachments: [],
+            attachments: message.attachments ?? [],
             createdAt: new Date(),
           },
         ],
@@ -259,10 +259,10 @@ export async function POST(request: Request) {
                   {
                     id: finishedMsg.id,
                     role: finishedMsg.role,
-                    parts: finishedMsg.parts,
-                    createdAt: new Date(),
-                    attachments: [],
-                    chatId: id,
+            parts: finishedMsg.parts,
+            createdAt: new Date(),
+            attachments: finishedMsg.attachments ?? [],
+            chatId: id,
                   },
                 ],
               });
@@ -275,7 +275,7 @@ export async function POST(request: Request) {
               role: currentMessage.role,
               parts: currentMessage.parts,
               createdAt: new Date(),
-              attachments: [],
+              attachments: currentMessage.attachments ?? [],
               chatId: id,
             })),
           });

@@ -6,17 +6,43 @@ import { ChatbotError } from "@/lib/errors";
 const MAX_MESSAGES = 60 * 60;
 const TTL_SECONDS = 60 * 60;
 
-let client: ReturnType<typeof createClient> | null = null;
+type RedisClient = ReturnType<typeof createClient>;
 
-function getClient() {
-  if (!client && process.env.REDIS_URL) {
-    client = createClient({ url: process.env.REDIS_URL });
-    client.on("error", () => undefined);
-    client.connect().catch(() => {
-      client = null;
-    });
+let client: RedisClient | null = null;
+let connectPromise: Promise<RedisClient | null> | null = null;
+
+async function getClient() {
+  if (!process.env.REDIS_URL) {
+    return null;
   }
-  return client;
+
+  if (client?.isReady) {
+    return client;
+  }
+
+  if (connectPromise) {
+    return connectPromise;
+  }
+
+  client = createClient({ url: process.env.REDIS_URL });
+  client.on("error", () => undefined);
+  client.on("end", () => {
+    client = null;
+    connectPromise = null;
+  });
+
+  connectPromise = client
+    .connect()
+    .then(() => client)
+    .catch(() => {
+      client = null;
+      return null;
+    })
+    .finally(() => {
+      connectPromise = null;
+    });
+
+  return connectPromise;
 }
 
 export async function checkIpRateLimit(ip: string | undefined) {
@@ -24,12 +50,12 @@ export async function checkIpRateLimit(ip: string | undefined) {
     return;
   }
 
-  const redis = getClient();
-  if (!redis?.isReady) {
-    return;
-  }
-
   try {
+    const redis = await getClient();
+    if (!redis?.isReady) {
+      return;
+    }
+
     const key = `ip-rate-limit:${ip}`;
     const [count] = await redis
       .multi()

@@ -62,10 +62,61 @@ import {
 import { SuggestedActions } from "./suggested-actions";
 import type { VisibilityType } from "./visibility-selector";
 
+const ACCEPTED_ATTACHMENT_TYPES = [
+  ".doc",
+  ".docx",
+  ".jpeg",
+  ".jpg",
+  ".pdf",
+  ".png",
+  ".ppt",
+  ".pptx",
+  ".xls",
+  ".xlsx",
+  "application/msword",
+  "application/pdf",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/jpeg",
+  "image/png",
+].join(",");
+
+const MAX_ATTACHMENT_CONTEXT_CHARS = 45_000;
+
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365;
   // biome-ignore lint/suspicious/noDocumentCookie: needed for client-side cookie setting
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}`;
+}
+
+function canSendDirectFile(contentType: string) {
+  return contentType.startsWith("image/") || contentType === "application/pdf";
+}
+
+function buildAttachmentContext(attachments: Attachment[]) {
+  const context = attachments
+    .map((attachment) => {
+      if (attachment.extractedText?.trim()) {
+        return `檔案：${attachment.name}\n類型：${attachment.contentType}\n已抽取內容：\n${attachment.extractedText.trim()}`;
+      }
+
+      if (!canSendDirectFile(attachment.contentType)) {
+        return `檔案：${attachment.name}\n類型：${attachment.contentType}\n此附件已上傳，但未能自動抽取文字。若需要完整解析，請優先使用 DOCX、XLSX、PPTX、PDF、PNG 或 JPG。`;
+      }
+
+      return "";
+    })
+    .filter(Boolean)
+    .join("\n\n---\n\n");
+
+  if (context.length <= MAX_ATTACHMENT_CONTEXT_CHARS) {
+    return context;
+  }
+
+  return `${context.slice(0, MAX_ATTACHMENT_CONTEXT_CHARS)}\n\n[附件文字內容過長，已截斷前 ${MAX_ATTACHMENT_CONTEXT_CHARS} 字供 AI 解析。]`;
 }
 
 function PureMultimodalInput({
@@ -222,18 +273,26 @@ function PureMultimodalInput({
       `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${chatId}`
     );
 
+    const attachmentContext = buildAttachmentContext(attachments);
+    const userPrompt = input.trim() || "請解析附件內容，整理重點、風險和下一步。";
+    const text = attachmentContext
+      ? `以下是已上傳附件的可解析文字內容。請依照使用者要求分析，不要只說你無法讀取附件。\n\n${attachmentContext}\n\n使用者要求：\n${userPrompt}`
+      : userPrompt;
+
     sendMessage({
       role: "user",
       parts: [
-        ...attachments.map((attachment) => ({
-          type: "file" as const,
-          url: attachment.url,
-          name: attachment.name,
-          mediaType: attachment.contentType,
-        })),
+        ...attachments
+          .filter((attachment) => canSendDirectFile(attachment.contentType))
+          .map((attachment) => ({
+            type: "file" as const,
+            url: attachment.url,
+            name: attachment.name,
+            mediaType: attachment.contentType,
+          })),
         {
           type: "text",
-          text: input,
+          text,
         },
       ],
     });
@@ -271,12 +330,13 @@ function PureMultimodalInput({
 
       if (response.ok) {
         const data = await response.json();
-        const { url, pathname, contentType } = data;
+        const { url, pathname, contentType, extractedText } = data;
 
         return {
           url,
           name: pathname,
           contentType,
+          extractedText,
         };
       }
       const { error } = await response.json();
@@ -402,6 +462,7 @@ function PureMultimodalInput({
         )}
 
       <input
+        accept={ACCEPTED_ATTACHMENT_TYPES}
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         multiple
         onChange={handleFileChange}
@@ -515,18 +576,14 @@ function PureMultimodalInput({
           placeholder={
             editingMessage
               ? "編輯您的訊息…"
-              : "描述目標、貼上圖片，或輸入 / 使用快捷指令…"
+              : "描述目標、貼上文件或圖片，或輸入 / 使用快捷指令…"
           }
           ref={textareaRef}
           value={input}
         />
         <PromptInputFooter className="px-3 pb-3">
           <PromptInputTools>
-            <AttachmentsButton
-              fileInputRef={fileInputRef}
-              selectedModelId={selectedModelId}
-              status={status}
-            />
+            <AttachmentsButton fileInputRef={fileInputRef} status={status} />
             <ModelSelectorCompact
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
@@ -594,38 +651,21 @@ export const MultimodalInput = memo(
 function PureAttachmentsButton({
   fileInputRef,
   status,
-  selectedModelId,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>["status"];
-  selectedModelId: string;
 }) {
-  const { data: modelsResponse } = useSWR(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
-    (url: string) => fetch(url).then((r) => r.json()),
-    { revalidateOnFocus: false, dedupingInterval: 3_600_000 }
-  );
-
-  const caps: Record<string, ModelCapabilities> | undefined =
-    modelsResponse?.capabilities ?? modelsResponse;
-  const hasVision = caps?.[selectedModelId]?.vision ?? false;
-
   return (
     <Button
-      aria-label={hasVision ? "上傳附件" : "目前模型不支援附件"}
-      className={cn(
-        "h-7 w-7 rounded-lg border border-border/40 p-1 transition-colors",
-        hasVision
-          ? "text-foreground hover:border-border hover:text-foreground"
-          : "text-muted-foreground/30 cursor-not-allowed"
-      )}
+      aria-label="上傳文件或圖片"
+      className="h-7 w-7 rounded-lg border border-border/40 p-1 text-foreground transition-colors hover:border-border hover:text-foreground disabled:cursor-not-allowed disabled:text-muted-foreground/30"
       data-testid="attachments-button"
-      disabled={status !== "ready" || !hasVision}
+      disabled={status !== "ready"}
       onClick={(event) => {
         event.preventDefault();
         fileInputRef.current?.click();
       }}
-      title={hasVision ? "上傳附件" : "目前模型不支援附件"}
+      title="上傳文件或圖片"
       variant="ghost"
     >
       <PaperclipIcon size={14} style={{ width: 14, height: 14 }} />

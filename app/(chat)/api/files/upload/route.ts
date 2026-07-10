@@ -95,7 +95,11 @@ export async function POST(request: Request) {
         contentType,
       });
 
-      return NextResponse.json(data);
+      return NextResponse.json({
+        ...data,
+        contentType,
+        pathname: file.name,
+      });
     } catch (_error) {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }

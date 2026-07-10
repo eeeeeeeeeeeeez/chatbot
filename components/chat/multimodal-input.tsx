@@ -368,6 +368,9 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  const canSubmit = input.trim().length > 0 || attachments.length > 0;
+  const isUploading = uploadQueue.length > 0;
+
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {editingMessage && onCancelEdit && (
@@ -381,7 +384,7 @@ function PureMultimodalInput({
             }}
             type="button"
           >
-            Cancel
+            取消
           </button>
         </div>
       )}
@@ -429,7 +432,7 @@ function PureMultimodalInput({
             }
             return;
           }
-          if (!input.trim() && attachments.length === 0) {
+          if (!canSubmit) {
             return;
           }
           if (status === "ready" || status === "error") {
@@ -510,7 +513,9 @@ function PureMultimodalInput({
             }
           }}
           placeholder={
-            editingMessage ? "編輯您的訊息…" : "輸入任何問題…"
+            editingMessage
+              ? "編輯您的訊息…"
+              : "描述目標、貼上圖片，或輸入 / 使用快捷指令…"
           }
           ref={textareaRef}
           value={input}
@@ -532,15 +537,17 @@ function PureMultimodalInput({
             <StopButton setMessages={setMessages} stop={stop} />
           ) : (
             <PromptInputSubmit
+              aria-label="送出訊息"
               className={cn(
                 "h-7 w-7 rounded-xl transition-all duration-200",
-                input.trim()
+                canSubmit && !isUploading
                   ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                   : "bg-muted text-muted-foreground/25 cursor-not-allowed"
               )}
               data-testid="send-button"
-              disabled={!input.trim() || uploadQueue.length > 0}
+              disabled={!canSubmit || isUploading}
               status={status}
+              title="送出訊息"
               variant="secondary"
             >
               <ArrowUpIcon className="size-4" />
@@ -605,6 +612,7 @@ function PureAttachmentsButton({
 
   return (
     <Button
+      aria-label={hasVision ? "上傳附件" : "目前模型不支援附件"}
       className={cn(
         "h-7 w-7 rounded-lg border border-border/40 p-1 transition-colors",
         hasVision
@@ -617,6 +625,7 @@ function PureAttachmentsButton({
         event.preventDefault();
         fileInputRef.current?.click();
       }}
+      title={hasVision ? "上傳附件" : "目前模型不支援附件"}
       variant="ghost"
     >
       <PaperclipIcon size={14} style={{ width: 14, height: 14 }} />
@@ -664,8 +673,10 @@ function PureModelSelectorCompact({
     <ModelSelector onOpenChange={setOpen} open={open}>
       <ModelSelectorTrigger asChild>
         <Button
+          aria-label="選擇 AI 模型"
           className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
           data-testid="model-selector"
+          title="選擇 AI 模型"
           variant="ghost"
         >
           {provider && <ModelSelectorLogo provider={provider} />}
@@ -815,6 +826,7 @@ function PureStopButton({
 }) {
   return (
     <Button
+      aria-label="停止回應"
       className="h-7 w-7 rounded-xl bg-foreground p-1 text-background transition-all duration-200 hover:opacity-85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
       data-testid="stop-button"
       onClick={(event) => {
@@ -822,6 +834,7 @@ function PureStopButton({
         stop();
         setMessages((messages) => messages);
       }}
+      title="停止回應"
     >
       <StopIcon size={14} />
     </Button>

@@ -1,19 +1,61 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
 
-const FileSchema = z.object({
-  file: z
-    .instanceof(Blob)
-    .refine((file) => file.size <= 5 * 1024 * 1024, {
-      message: "File size should be less than 5MB",
-    })
-    .refine((file) => ["image/jpeg", "image/png"].includes(file.type), {
-      message: "File type should be JPEG or PNG",
-    }),
-});
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
+const MAX_FILE_SIZE_LABEL = "25MB";
+
+const allowedTypes = new Set([
+  "application/msword",
+  "application/pdf",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+]);
+
+const fallbackTypesByExtension: Record<string, string> = {
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  pdf: "application/pdf",
+  png: "image/png",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+};
+
+const allowedExtensions = new Set(Object.keys(fallbackTypesByExtension));
+
+function getFileExtension(filename: string) {
+  return filename.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function sanitizeFilename(filename: string) {
+  const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+  return safeName || "upload";
+}
+
+function validateFile(file: File) {
+  if (file.size > MAX_FILE_SIZE) {
+    return `檔案大小需小於 ${MAX_FILE_SIZE_LABEL}`;
+  }
+
+  const extension = getFileExtension(file.name);
+  const isAllowedType = file.type ? allowedTypes.has(file.type) : false;
+  const isAllowedExtension = allowedExtensions.has(extension);
+
+  if (!isAllowedType && !isAllowedExtension) {
+    return "支援格式：PDF、PNG、JPG、XLS、XLSX、PPT、PPTX、DOC、DOCX";
+  }
+}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -23,34 +65,34 @@ export async function POST(request: Request) {
   }
 
   if (request.body === null) {
-    return new Response("Request body is empty", { status: 400 });
+    return NextResponse.json({ error: "Request body is empty" }, { status: 400 });
   }
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as Blob;
+    const file = formData.get("file");
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    const validatedFile = FileSchema.safeParse({ file });
+    const validationError = validateFile(file);
 
-    if (!validatedFile.success) {
-      const errorMessage = validatedFile.error.errors
-        .map((error) => error.message)
-        .join(", ");
-
-      return NextResponse.json({ error: errorMessage }, { status: 400 });
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    const filename = (formData.get("file") as File).name;
-    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const extension = getFileExtension(file.name);
+    const safeName = sanitizeFilename(file.name);
+    const pathname = `uploads/${crypto.randomUUID()}-${safeName}`;
+    const contentType =
+      file.type || fallbackTypesByExtension[extension] || "application/octet-stream";
     const fileBuffer = await file.arrayBuffer();
 
     try {
-      const data = await put(`${safeName}`, fileBuffer, {
+      const data = await put(pathname, fileBuffer, {
         access: "public",
+        contentType,
       });
 
       return NextResponse.json(data);

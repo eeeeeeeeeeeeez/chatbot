@@ -1,14 +1,27 @@
 import { z } from "zod";
 
+const supportedFileTypes = [
+  "application/msword",
+  "application/pdf",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+] as const;
+
 const textPartSchema = z.object({
   type: z.enum(["text"]),
-  text: z.string().min(1).max(2000),
+  text: z.string().min(1).max(50_000),
 });
 
 const filePartSchema = z.object({
   type: z.enum(["file"]),
-  mediaType: z.enum(["image/jpeg", "image/png"]),
-  name: z.string().min(1).max(100),
+  mediaType: z.enum(supportedFileTypes),
+  name: z.string().min(1).max(200),
   url: z.string().url(),
 });
 

@@ -295,7 +295,6 @@ function PureMultimodalInput({
           text,
         },
       ],
-      attachments,
     });
 
     setAttachments([]);
@@ -331,11 +330,11 @@ function PureMultimodalInput({
 
       if (response.ok) {
         const data = await response.json();
-        const { url, name, contentType, extractedText } = data;
+        const { url, pathname, contentType, extractedText } = data;
 
         return {
           url,
-          name,
+          name: pathname,
           contentType,
           extractedText,
         };
@@ -597,9 +596,9 @@ function PureMultimodalInput({
             <PromptInputSubmit
               aria-label="送出訊息"
               className={cn(
-                "h-7 w-7 rounded-xl transition-all duration-200",
+                "h-7 w-7 rounded-xl transition-[background-color,color,opacity,transform] duration-150 ease-out active:duration-100",
                 canSubmit && !isUploading
-                  ? "bg-foreground text-background hover:opacity-85 active:scale-95"
+                  ? "bg-foreground text-background hover:opacity-85 active:scale-[0.94]"
                   : "bg-muted text-muted-foreground/25 cursor-not-allowed"
               )}
               data-testid="send-button"
@@ -868,7 +867,7 @@ function PureStopButton({
   return (
     <Button
       aria-label="停止回應"
-      className="h-7 w-7 rounded-xl bg-foreground p-1 text-background transition-all duration-200 hover:opacity-85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
+      className="h-7 w-7 rounded-xl bg-foreground p-1 text-background transition-[background-color,color,opacity,transform] duration-150 ease-out active:duration-100 hover:opacity-85 active:scale-[0.94] disabled:bg-muted disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
       data-testid="stop-button"
       onClick={(event) => {
         event.preventDefault();

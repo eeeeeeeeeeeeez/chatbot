@@ -331,10 +331,7 @@ const PurePreviewMessage = ({
 
   return (
     <div
-      className={cn(
-        "group/message w-full",
-        !isAssistant && "animate-[fade-up_0.25s_cubic-bezier(0.22,1,0.36,1)]"
-      )}
+      className="group/message w-full fade-up"
       data-role={message.role}
       data-testid={`message-${message.role}`}
     >
@@ -365,7 +362,7 @@ export const PreviewMessage = PurePreviewMessage;
 export const ThinkingMessage = () => {
   return (
     <div
-      className="group/message w-full"
+      className="group/message w-full fade-up"
       data-role="assistant"
       data-testid="message-assistant-loading"
     >

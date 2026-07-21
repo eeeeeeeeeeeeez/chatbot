@@ -276,7 +276,7 @@ function PureMultimodalInput({
     const attachmentContext = buildAttachmentContext(attachments);
     const userPrompt = input.trim() || "請解析附件內容，整理重點、風險和下一步。";
     const text = attachmentContext
-      ? `以下是已上傳附件的可解析文字內容。請依照使用者要求分析，不要只說你無法讀取附件。\n\n${attachmentContext}\n\n使用者要求：\n${userPrompt}`
+      ? `以下是已上傳附件的可解析文字內容。請依照使用者要求分析，不要只說你無法讀取附件。\n\n<!--attachment-context-->\n${attachmentContext}\n<!--/attachment-context-->\n\n使用者要求：\n${userPrompt}`
       : userPrompt;
 
     sendMessage({

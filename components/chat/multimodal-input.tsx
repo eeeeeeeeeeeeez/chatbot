@@ -339,8 +339,18 @@ function PureMultimodalInput({
           extractedText,
         };
       }
-      const { error } = await response.json();
-      toast.error(error);
+
+      if (response.status === 401) {
+        toast.error("登入已過期，請重新整理頁面後再試一次。");
+        return;
+      }
+
+      try {
+        const { error } = await response.json();
+        toast.error(error ?? "檔案上傳失敗，請再試一次！");
+      } catch {
+        toast.error("檔案上傳失敗，請再試一次！");
+      }
     } catch (_error) {
       toast.error("檔案上傳失敗，請再試一次！");
     }

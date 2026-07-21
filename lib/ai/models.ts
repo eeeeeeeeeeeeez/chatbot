@@ -20,12 +20,31 @@ export type ChatModel = {
   description: string;
 };
 
+export const antigravityAgentId = "antigravity-preview-05-2026";
+
+/**
+ * The Antigravity agent runs through Google's Interactions API
+ * (client.interactions.create), not the standard generateContent chat
+ * completion API. It gets its own execution path in the chat route rather
+ * than going through getLanguageModel()/streamText().
+ */
+export function isAntigravityAgent(modelId: string): boolean {
+  return modelId === antigravityAgentId;
+}
+
 export const chatModels: ChatModel[] = [
   {
     id: "gemini-3.1-flash-lite",
     name: "Tvivl 1.5 Beta",
     provider: "google",
     description: "Fast Tvivl model with tool use and multimodal input",
+  },
+  {
+    id: antigravityAgentId,
+    name: "Antigravity Agent",
+    provider: "google-antigravity",
+    description:
+      "Agentic assistant with its own sandbox: code execution, web search, and file access (preview)",
   },
 ];
 
@@ -35,7 +54,11 @@ export async function getCapabilities(): Promise<
   return Object.fromEntries(
     chatModels.map((model) => [
       model.id,
-      { tools: true, vision: true, reasoning: false },
+      isAntigravityAgent(model.id)
+        ? // No app-level function calling yet; the agent uses its own
+          // sandboxed tools (code execution, search, filesystem) instead.
+          { tools: false, vision: true, reasoning: true }
+        : { tools: true, vision: true, reasoning: false },
     ])
   );
 }

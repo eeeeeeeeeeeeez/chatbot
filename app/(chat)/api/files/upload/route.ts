@@ -4,8 +4,12 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/app/(auth)/auth";
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024;
-const MAX_FILE_SIZE_LABEL = "25MB";
+// Vercel Functions cap request bodies at ~4.5MB for server-side uploads
+// (https://vercel.com/docs/vercel-blob/server-upload#server-upload-limits).
+// Anything larger must go through Blob's client-upload flow instead, which
+// this route does not implement, so we validate against the real ceiling.
+const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
+const MAX_FILE_SIZE_LABEL = "4.5MB";
 const MAX_EXTRACTED_TEXT_CHARS = 16_000;
 
 const allowedTypes = new Set([
@@ -238,8 +242,18 @@ export async function POST(request: Request) {
         extractedText,
         name: file.name,
       });
-    } catch (_error) {
-      return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    } catch (blobError) {
+      // Log the real cause server-side (visible in Vercel Function Logs)
+      // so a missing/invalid BLOB_READ_WRITE_TOKEN or quota issue is
+      // diagnosable, without leaking details to the client.
+      console.error("[files/upload] Vercel Blob put() failed:", blobError);
+
+      const message =
+        process.env.BLOB_READ_WRITE_TOKEN
+          ? "上傳服務暫時無法使用，請稍後再試。"
+          : "上傳服務尚未設定完成（缺少 BLOB_READ_WRITE_TOKEN），請聯絡管理員。";
+
+      return NextResponse.json({ error: message }, { status: 500 });
     }
   } catch (_error) {
     return NextResponse.json(

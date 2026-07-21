@@ -1,357 +1,413 @@
 "use client";
-
-import type { UIMessage } from "ai";
-import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
-
-import { Button } from "@/components/ui/button";
+import type { UseChatHelpers } from "@ai-sdk/react";
+import type { Vote } from "@/lib/db/schema";
+import type { ChatMessage } from "@/lib/types";
+import { cn, parseAttachmentContextMessage, sanitizeText } from "@/lib/utils";
+import { MessageContent, MessageResponse } from "../ai-elements/message";
+import { Shimmer } from "../ai-elements/shimmer";
 import {
-  ButtonGroup,
-  ButtonGroupText,
-} from "@/components/ui/button-group";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import {
-  createContext,
-  memo,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { Streamdown } from "streamdown";
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "../ai-elements/tool";
+import { useDataStream } from "./data-stream-provider";
+import { DocumentToolResult } from "./document";
+import { DocumentPreview } from "./document-preview";
+import { PaperclipIcon, SparklesIcon } from "./icons";
+import { MessageActions } from "./message-actions";
+import { MessageReasoning } from "./message-reasoning";
+import { PreviewAttachment } from "./preview-attachment";
+import { Weather } from "./weather";
 
-export type MessageProps = HTMLAttributes<HTMLDivElement> & {
-  from: UIMessage["role"];
-};
-
-export const Message = ({ className, from, ...props }: MessageProps) => (
-  <div
-    className={cn(
-      "group flex w-full max-w-[95%] flex-col gap-2",
-      from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
-      className
-    )}
-    {...props}
-  />
-);
-
-export type MessageContentProps = HTMLAttributes<HTMLDivElement>;
-
-export const MessageContent = ({
-  children,
-  className,
-  ...props
-}: MessageContentProps) => (
-  <div
-    className={cn(
-      "flex min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm text-foreground",
-      className
-    )}
-    {...props}
-  >
-    {children}
-  </div>
-);
-
-export type MessageActionsProps = ComponentProps<"div">;
-
-export const MessageActions = ({
-  className,
-  children,
-  ...props
-}: MessageActionsProps) => (
-  <div className={cn("flex items-center gap-1", className)} {...props}>
-    {children}
-  </div>
-);
-
-export type MessageActionProps = ComponentProps<typeof Button> & {
-  tooltip?: string;
-  label?: string;
-};
-
-export const MessageAction = ({
-  tooltip,
-  children,
-  label,
-  variant = "ghost",
-  size = "icon-sm",
-  ...props
-}: MessageActionProps) => {
-  const button = (
-    <Button size={size} type="button" variant={variant} {...props}>
-      {children}
-      <span className="sr-only">{label || tooltip}</span>
-    </Button>
+const PurePreviewMessage = ({
+  addToolApprovalResponse,
+  chatId,
+  message,
+  vote,
+  isLoading,
+  setMessages: _setMessages,
+  regenerate: _regenerate,
+  isReadonly,
+  requiresScrollPadding: _requiresScrollPadding,
+  onEdit,
+}: {
+  addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
+  chatId: string;
+  message: ChatMessage;
+  vote: Vote | undefined;
+  isLoading: boolean;
+  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
+  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  isReadonly: boolean;
+  requiresScrollPadding: boolean;
+  onEdit?: (message: ChatMessage) => void;
+}) => {
+  const attachmentsFromMessage = message.parts.filter(
+    (part) => part.type === "file"
   );
 
-  if (tooltip) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>{button}</TooltipTrigger>
-          <TooltipContent>
-            <p>{tooltip}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
+  useDataStream();
 
-  return button;
-};
+  const isUser = message.role === "user";
+  const isAssistant = message.role === "assistant";
 
-interface MessageBranchContextType {
-  currentBranch: number;
-  totalBranches: number;
-  goToPrevious: () => void;
-  goToNext: () => void;
-  branches: ReactElement[];
-  setBranches: (branches: ReactElement[]) => void;
-}
-
-const MessageBranchContext = createContext<MessageBranchContextType | null>(
-  null
-);
-
-const useMessageBranch = () => {
-  const context = useContext(MessageBranchContext);
-
-  if (!context) {
-    throw new Error(
-      "MessageBranch components must be used within MessageBranch"
-    );
-  }
-
-  return context;
-};
-
-export type MessageBranchProps = HTMLAttributes<HTMLDivElement> & {
-  defaultBranch?: number;
-  onBranchChange?: (branchIndex: number) => void;
-};
-
-export const MessageBranch = ({
-  defaultBranch = 0,
-  onBranchChange,
-  className,
-  ...props
-}: MessageBranchProps) => {
-  const [currentBranch, setCurrentBranch] = useState(defaultBranch);
-  const [branches, setBranches] = useState<ReactElement[]>([]);
-
-  const handleBranchChange = useCallback(
-    (newBranch: number) => {
-      setCurrentBranch(newBranch);
-      onBranchChange?.(newBranch);
-    },
-    [onBranchChange]
+  const hasAnyContent = message.parts?.some(
+    (part) =>
+      (part.type === "text" && part.text?.trim().length > 0) ||
+      (part.type === "reasoning" &&
+        "text" in part &&
+        part.text?.trim().length > 0) ||
+      part.type.startsWith("tool-")
   );
+  const isThinking = isAssistant && isLoading && !hasAnyContent;
 
-  const goToPrevious = useCallback(() => {
-    const newBranch =
-      currentBranch > 0 ? currentBranch - 1 : branches.length - 1;
-    handleBranchChange(newBranch);
-  }, [currentBranch, branches.length, handleBranchChange]);
-
-  const goToNext = useCallback(() => {
-    const newBranch =
-      currentBranch < branches.length - 1 ? currentBranch + 1 : 0;
-    handleBranchChange(newBranch);
-  }, [currentBranch, branches.length, handleBranchChange]);
-
-  const contextValue = useMemo<MessageBranchContextType>(
-    () => ({
-      branches,
-      currentBranch,
-      goToNext,
-      goToPrevious,
-      setBranches,
-      totalBranches: branches.length,
-    }),
-    [branches, currentBranch, goToNext, goToPrevious]
-  );
-
-  return (
-    <MessageBranchContext.Provider value={contextValue}>
-      <div
-        className={cn("grid w-full gap-2 [&>div]:pb-0", className)}
-        {...props}
-      />
-    </MessageBranchContext.Provider>
-  );
-};
-
-export type MessageBranchContentProps = HTMLAttributes<HTMLDivElement>;
-
-export const MessageBranchContent = ({
-  children,
-  ...props
-}: MessageBranchContentProps) => {
-  const { currentBranch, setBranches, branches } = useMessageBranch();
-  const childrenArray = useMemo(
-    () => (Array.isArray(children) ? children : [children]),
-    [children]
-  );
-
-  // Use useEffect to update branches when they change
-  useEffect(() => {
-    if (branches.length !== childrenArray.length) {
-      setBranches(childrenArray);
-    }
-  }, [childrenArray, branches, setBranches]);
-
-  return childrenArray.map((branch, index) => (
+  const attachments = attachmentsFromMessage.length > 0 && (
     <div
-      className={cn(
-        "grid gap-2 overflow-hidden [&>div]:pb-0",
-        index === currentBranch ? "block" : "hidden"
-      )}
-      key={branch.key}
-      {...props}
+      className="flex flex-row justify-end gap-2"
+      data-testid={"message-attachments"}
     >
-      {branch}
+      {attachmentsFromMessage.map((attachment) => (
+        <PreviewAttachment
+          attachment={{
+            name: attachment.filename ?? "file",
+            contentType: attachment.mediaType,
+            url: attachment.url,
+          }}
+          key={attachment.url}
+        />
+      ))}
     </div>
-  ));
-};
+  );
 
-export type MessageBranchSelectorProps = ComponentProps<typeof ButtonGroup>;
+  const mergedReasoning = message.parts?.reduce(
+    (acc, part) => {
+      if (part.type === "reasoning" && part.text?.trim().length > 0) {
+        return {
+          text: acc.text ? `${acc.text}\n\n${part.text}` : part.text,
+          isStreaming: "state" in part ? part.state === "streaming" : false,
+          rendered: false,
+        };
+      }
+      return acc;
+    },
+    { text: "", isStreaming: false, rendered: false }
+  ) ?? { text: "", isStreaming: false, rendered: false };
 
-export const MessageBranchSelector = ({
-  className,
-  ...props
-}: MessageBranchSelectorProps) => {
-  const { totalBranches } = useMessageBranch();
+  const parts = message.parts?.map((part, index) => {
+    const { type } = part;
+    const key = `message-${message.id}-part-${index}`;
 
-  // Don't render if there's only one branch
-  if (totalBranches <= 1) {
+    if (type === "reasoning") {
+      if (!mergedReasoning.rendered && mergedReasoning.text) {
+        mergedReasoning.rendered = true;
+        return (
+          <MessageReasoning
+            isLoading={isLoading || mergedReasoning.isStreaming}
+            key={key}
+            reasoning={mergedReasoning.text}
+          />
+        );
+      }
+      return null;
+    }
+
+    if (type === "text") {
+      const parsed =
+        message.role === "user"
+          ? parseAttachmentContextMessage(part.text)
+          : null;
+
+      return (
+        <MessageContent
+          className={cn("text-[13px] leading-[1.65]", {
+            "w-fit max-w-[min(80%,56ch)] overflow-hidden break-words rounded-2xl rounded-br-lg border border-border/30 bg-gradient-to-br from-secondary to-muted px-3.5 py-2 shadow-[var(--shadow-card)]":
+              message.role === "user",
+          })}
+          data-testid="message-content"
+          key={key}
+        >
+          {parsed ? (
+            <>
+              {parsed.attachmentSummaries.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {parsed.attachmentSummaries.map((attachment) => (
+                    <span
+                      className="inline-flex max-w-[220px] items-center gap-1 rounded-md border border-border/50 bg-background/60 px-2 py-1 text-[11px] text-muted-foreground"
+                      key={attachment.name}
+                      title={`已擷取 ${attachment.charCount.toLocaleString()} 字供 AI 分析`}
+                    >
+                      <PaperclipIcon size={12} />
+                      <span className="truncate">{attachment.name}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <MessageResponse>
+                {sanitizeText(
+                  parsed.visibleText || "請解析附件內容，整理重點、風險和下一步。"
+                )}
+              </MessageResponse>
+            </>
+          ) : (
+            <MessageResponse>{sanitizeText(part.text)}</MessageResponse>
+          )}
+        </MessageContent>
+      );
+    }
+
+    if (type === "tool-getWeather") {
+      const { toolCallId, state } = part;
+      const approvalId = (part as { approval?: { id: string } }).approval?.id;
+      const isDenied =
+        state === "output-denied" ||
+        (state === "approval-responded" &&
+          (part as { approval?: { approved?: boolean } }).approval?.approved ===
+            false);
+      const widthClass = "w-[min(100%,450px)]";
+
+      if (state === "output-available") {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            <Weather weatherAtLocation={part.output} />
+          </div>
+        );
+      }
+
+      if (isDenied) {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            <Tool className="w-full" defaultOpen={true}>
+              <ToolHeader state="output-denied" type="tool-getWeather" />
+              <ToolContent>
+                <div className="px-4 py-3 text-muted-foreground text-sm">
+                  Weather lookup was denied.
+                </div>
+              </ToolContent>
+            </Tool>
+          </div>
+        );
+      }
+
+      if (state === "approval-responded") {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            <Tool className="w-full" defaultOpen={true}>
+              <ToolHeader state={state} type="tool-getWeather" />
+              <ToolContent>
+                <ToolInput input={part.input} />
+              </ToolContent>
+            </Tool>
+          </div>
+        );
+      }
+
+      return (
+        <div className={widthClass} key={toolCallId}>
+          <Tool className="w-full" defaultOpen={true}>
+            <ToolHeader state={state} type="tool-getWeather" />
+            <ToolContent>
+              {(state === "input-available" ||
+                state === "approval-requested") && (
+                <ToolInput input={part.input} />
+              )}
+              {state === "approval-requested" && approvalId && (
+                <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
+                  <button
+                    className="rounded-md px-3 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
+                    onClick={() => {
+                      addToolApprovalResponse({
+                        id: approvalId,
+                        approved: false,
+                        reason: "User denied weather lookup",
+                      });
+                    }}
+                    type="button"
+                  >
+                    Deny
+                  </button>
+                  <button
+                    className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
+                    onClick={() => {
+                      addToolApprovalResponse({
+                        id: approvalId,
+                        approved: true,
+                      });
+                    }}
+                    type="button"
+                  >
+                    Allow
+                  </button>
+                </div>
+              )}
+            </ToolContent>
+          </Tool>
+        </div>
+      );
+    }
+
+    if (type === "tool-createDocument") {
+      const { toolCallId } = part;
+
+      if (part.output && "error" in part.output) {
+        return (
+          <div
+            className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500 dark:bg-red-950/50"
+            key={toolCallId}
+          >
+            Error creating document: {String(part.output.error)}
+          </div>
+        );
+      }
+
+      return (
+        <DocumentPreview
+          isReadonly={isReadonly}
+          key={toolCallId}
+          result={part.output}
+        />
+      );
+    }
+
+    if (type === "tool-updateDocument") {
+      const { toolCallId } = part;
+
+      if (part.output && "error" in part.output) {
+        return (
+          <div
+            className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500 dark:bg-red-950/50"
+            key={toolCallId}
+          >
+            Error updating document: {String(part.output.error)}
+          </div>
+        );
+      }
+
+      return (
+        <div className="relative" key={toolCallId}>
+          <DocumentPreview
+            args={{ ...part.output, isUpdate: true }}
+            isReadonly={isReadonly}
+            result={part.output}
+          />
+        </div>
+      );
+    }
+
+    if (type === "tool-requestSuggestions") {
+      const { toolCallId, state } = part;
+
+      return (
+        <Tool
+          className="w-[min(100%,450px)]"
+          defaultOpen={true}
+          key={toolCallId}
+        >
+          <ToolHeader state={state} type="tool-requestSuggestions" />
+          <ToolContent>
+            {state === "input-available" && <ToolInput input={part.input} />}
+            {state === "output-available" && (
+              <ToolOutput
+                errorText={undefined}
+                output={
+                  "error" in part.output ? (
+                    <div className="rounded border p-2 text-red-500">
+                      Error: {String(part.output.error)}
+                    </div>
+                  ) : (
+                    <DocumentToolResult
+                      isReadonly={isReadonly}
+                      result={part.output}
+                      type="request-suggestions"
+                    />
+                  )
+                }
+              />
+            )}
+          </ToolContent>
+        </Tool>
+      );
+    }
+
     return null;
-  }
+  });
 
-  return (
-    <ButtonGroup
-      className={cn(
-        "[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md",
-        className
-      )}
-      orientation="horizontal"
-      {...props}
+  const actions = !isReadonly && (
+    <MessageActions
+      chatId={chatId}
+      isLoading={isLoading}
+      key={`action-${message.id}`}
+      message={message}
+      onEdit={onEdit ? () => onEdit(message) : undefined}
+      vote={vote}
     />
   );
-};
 
-export type MessageBranchPreviousProps = ComponentProps<typeof Button>;
-
-export const MessageBranchPrevious = ({
-  children,
-  ...props
-}: MessageBranchPreviousProps) => {
-  const { goToPrevious, totalBranches } = useMessageBranch();
+  const content = isThinking ? (
+    <div className="flex h-[calc(13px*1.65)] items-center text-[13px] leading-[1.65]">
+      <Shimmer className="font-medium" duration={1}>
+        Thinking...
+      </Shimmer>
+    </div>
+  ) : (
+    <>
+      {attachments}
+      {parts}
+      {actions}
+    </>
+  );
 
   return (
-    <Button
-      aria-label="上一個分支"
-      disabled={totalBranches <= 1}
-      onClick={goToPrevious}
-      size="icon-sm"
-      type="button"
-      variant="ghost"
-      {...props}
+    <div
+      className="group/message w-full fade-up"
+      data-role={message.role}
+      data-testid={`message-${message.role}`}
     >
-      {children ?? <ChevronLeftIcon size={14} />}
-    </Button>
+      <div
+        className={cn(
+          isUser ? "flex flex-col items-end gap-2" : "flex items-start gap-3"
+        )}
+      >
+        {isAssistant && (
+          <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
+              <SparklesIcon size={13} />
+            </div>
+          </div>
+        )}
+        {isAssistant ? (
+          <div className="flex min-w-0 flex-1 flex-col gap-2">{content}</div>
+        ) : (
+          content
+        )}
+      </div>
+    </div>
   );
 };
 
-export type MessageBranchNextProps = ComponentProps<typeof Button>;
+export const PreviewMessage = PurePreviewMessage;
 
-export const MessageBranchNext = ({
-  children,
-  ...props
-}: MessageBranchNextProps) => {
-  const { goToNext, totalBranches } = useMessageBranch();
-
+export const ThinkingMessage = () => {
   return (
-    <Button
-      aria-label="下一個分支"
-      disabled={totalBranches <= 1}
-      onClick={goToNext}
-      size="icon-sm"
-      type="button"
-      variant="ghost"
-      {...props}
+    <div
+      className="group/message w-full fade-up"
+      data-role="assistant"
+      data-testid="message-assistant-loading"
     >
-      {children ?? <ChevronRightIcon size={14} />}
-    </Button>
+      <div className="flex items-start gap-3">
+        <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
+            <SparklesIcon size={13} />
+          </div>
+        </div>
+
+        <div className="flex h-[calc(13px*1.65)] items-center text-[13px] leading-[1.65]">
+          <Shimmer className="font-medium" duration={1}>
+            Thinking...
+          </Shimmer>
+        </div>
+      </div>
+    </div>
   );
 };
-
-export type MessageBranchPageProps = HTMLAttributes<HTMLSpanElement>;
-
-export const MessageBranchPage = ({
-  className,
-  ...props
-}: MessageBranchPageProps) => {
-  const { currentBranch, totalBranches } = useMessageBranch();
-
-  return (
-    <ButtonGroupText
-      className={cn(
-        "border-none bg-transparent text-muted-foreground shadow-none",
-        className
-      )}
-      {...props}
-    >
-      {currentBranch + 1} of {totalBranches}
-    </ButtonGroupText>
-  );
-};
-
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
-
-const streamdownPlugins = { cjk, code, math, mermaid };
-
-export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      plugins={streamdownPlugins}
-      {...props}
-    />
-  ),
-  (prevProps, nextProps) => prevProps.children === nextProps.children
-);
-
-MessageResponse.displayName = "MessageResponse";
-
-export type MessageToolbarProps = ComponentProps<"div">;
-
-export const MessageToolbar = ({
-  className,
-  children,
-  ...props
-}: MessageToolbarProps) => (
-  <div
-    className={cn(
-      "mt-4 flex w-full items-center justify-between gap-4",
-      className
-    )}
-    {...props}
-  >
-    {children}
-  </div>
-);

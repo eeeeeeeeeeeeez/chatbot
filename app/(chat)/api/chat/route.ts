@@ -12,10 +12,12 @@ import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
+import { runAntigravityAgent } from "@/lib/ai/antigravity";
 import {
   allowedModelIds,
   DEFAULT_CHAT_MODEL,
   getCapabilities,
+  isAntigravityAgent,
 } from "@/lib/ai/models";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -40,7 +42,11 @@ import type { DBMessage } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import { checkIpRateLimit } from "@/lib/ratelimit";
 import type { ChatMessage } from "@/lib/types";
-import { convertToUIMessages, generateUUID } from "@/lib/utils";
+import {
+  convertToUIMessages,
+  generateUUID,
+  getTextFromMessage,
+} from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -172,7 +178,7 @@ export async function POST(request: Request) {
             id: message.id,
             role: "user",
             parts: message.parts,
-            attachments: message.attachments ?? [],
+            attachments: [],
             createdAt: new Date(),
           },
         ],
@@ -183,16 +189,45 @@ export async function POST(request: Request) {
     const capabilities = modelCapabilities[chatModel];
     const isReasoningModel = capabilities?.reasoning === true;
     const supportsTools = capabilities?.tools === true;
+    const useAntigravityAgent = isAntigravityAgent(chatModel);
 
-    const modelMessages = await convertToModelMessages(uiMessages);
+    // The Antigravity agent runs through the Interactions API (its own
+    // sandboxed tool-use loop), so it skips convertToModelMessages/streamText
+    // entirely and only needs the latest user turn as input.
+    const modelMessages = useAntigravityAgent
+      ? null
+      : await convertToModelMessages(uiMessages);
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        if (useAntigravityAgent) {
+          const latestUserMessage = [...uiMessages]
+            .reverse()
+            .find((m) => m.role === "user");
+          await runAntigravityAgent({
+            dataStream,
+            input: latestUserMessage
+              ? getTextFromMessage(latestUserMessage)
+              : "",
+          });
+
+          if (titlePromise) {
+            try {
+              const title = await titlePromise;
+              dataStream.write({ type: "data-chat-title", data: title });
+              updateChatTitleById({ chatId: id, title });
+            } catch (_) {
+              /* non-fatal */
+            }
+          }
+          return;
+        }
+
         const result = streamText({
           model: getLanguageModel(chatModel),
           system: systemPrompt({ requestHints, supportsTools }),
-          messages: modelMessages,
+          messages: modelMessages ?? [],
           stopWhen: stepCountIs(5),
           experimental_activeTools:
             isReasoningModel && !supportsTools
@@ -259,10 +294,10 @@ export async function POST(request: Request) {
                   {
                     id: finishedMsg.id,
                     role: finishedMsg.role,
-            parts: finishedMsg.parts,
-            createdAt: new Date(),
-            attachments: finishedMsg.attachments ?? [],
-            chatId: id,
+                    parts: finishedMsg.parts,
+                    createdAt: new Date(),
+                    attachments: [],
+                    chatId: id,
                   },
                 ],
               });
@@ -275,7 +310,7 @@ export async function POST(request: Request) {
               role: currentMessage.role,
               parts: currentMessage.parts,
               createdAt: new Date(),
-              attachments: currentMessage.attachments ?? [],
+              attachments: [],
               chatId: id,
             })),
           });
@@ -288,6 +323,12 @@ export async function POST(request: Request) {
             error.message?.includes("x-goog-api-key"))
         ) {
           return "Gemini API key is missing or invalid. Please set GEMINI_API_KEY in your environment.";
+        }
+        if (
+          error instanceof Error &&
+          error.message?.includes("Antigravity agent request failed")
+        ) {
+          return error.message;
         }
         return "Oops, an error occurred!";
       },

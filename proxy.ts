@@ -22,6 +22,18 @@ export async function proxy(request: NextRequest) {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
   if (!token) {
+    // API routes (e.g. file upload, chat) are called via fetch with
+    // methods/bodies that a redirect to a GET-only guest route cannot
+    // preserve correctly. Return JSON instead so callers can react to
+    // an expired/missing session properly, rather than receiving a
+    // non-JSON response that breaks response.json() parsing.
+    if (pathname.startsWith("/api")) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const redirectUrl = encodeURIComponent(new URL(request.url).pathname);
 
     return NextResponse.redirect(

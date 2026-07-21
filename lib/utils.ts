@@ -68,6 +68,45 @@ export function sanitizeText(text: string) {
   return text.replace('<has_function_call>', '');
 }
 
+const ATTACHMENT_CONTEXT_RE =
+  /<!--attachment-context-->\n([\s\S]*?)\n<!--\/attachment-context-->\n?\n?/;
+const ATTACHMENT_ENTRY_RE = /^檔案：(.+)\n類型：.+\n已抽取內容：\n([\s\S]*)$/;
+
+export type ParsedAttachmentMessage = {
+  visibleText: string;
+  attachmentSummaries: { name: string; charCount: number }[];
+};
+
+/**
+ * The composer inlines full extracted document text into the user's
+ * message (wrapped in <!--attachment-context--> sentinels) so the model
+ * can read it, but showing that raw dump as the visible chat bubble is
+ * a poor experience. This pulls it back out for display: a short list of
+ * attached files plus the part of the message the user actually typed.
+ */
+export function parseAttachmentContextMessage(
+  text: string
+): ParsedAttachmentMessage | null {
+  const match = text.match(ATTACHMENT_CONTEXT_RE);
+
+  if (!match) {
+    return null;
+  }
+
+  const attachmentSummaries = match[1]
+    .split('\n\n---\n\n')
+    .map((entry) => entry.match(ATTACHMENT_ENTRY_RE))
+    .filter((entry): entry is RegExpMatchArray => entry !== null)
+    .map((entry) => ({ name: entry[1], charCount: entry[2].length }));
+
+  const visibleText = text
+    .slice(match.index! + match[0].length)
+    .replace(/^使用者要求：\n/, '')
+    .trim();
+
+  return { visibleText, attachmentSummaries };
+}
+
 export function convertToUIMessages(messages: DBMessage[]): ChatMessage[] {
   return messages.map((message) => ({
     id: message.id,

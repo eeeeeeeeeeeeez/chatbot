@@ -608,7 +608,7 @@ function PureMultimodalInput({
               className={cn(
                 "h-7 w-7 rounded-xl transition-[background-color,color,opacity,transform] duration-150 ease-out active:duration-100",
                 canSubmit && !isUploading
-                  ? "bg-foreground text-background hover:opacity-85 active:scale-[0.94]"
+                  ? "bg-brand text-brand-foreground hover:bg-brand/90 active:scale-[0.94]"
                   : "bg-muted text-muted-foreground/25 cursor-not-allowed"
               )}
               data-testid="send-button"

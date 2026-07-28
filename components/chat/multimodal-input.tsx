@@ -711,9 +711,7 @@ function PureModelSelectorCompact({
 
   // Force local name for specific model to bypass API cache issues
   const displayName =
-    selectedModel.id === "gemini-3.1-flash-lite" ||
-    selectedModel.id === "gemini-3.5-flash" ||
-    selectedModel.name.includes("Gemini")
+    selectedModel.id === "gemini-3.1-flash-lite"
       ? "Tvivl 1.5 Beta"
       : selectedModel.name;
 
@@ -833,9 +831,7 @@ function PureModelSelectorCompact({
                     >
                       <ModelSelectorLogo provider={logoProvider} />
                       <ModelSelectorName>
-                        {model.id === "gemini-3.1-flash-lite" ||
-                        model.id === "gemini-3.5-flash" ||
-                        model.name.includes("Gemini")
+                        {model.id === "gemini-3.1-flash-lite"
                           ? "Tvivl 1.5 Beta"
                           : model.name}
                       </ModelSelectorName>

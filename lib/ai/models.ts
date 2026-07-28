@@ -40,6 +40,18 @@ export const chatModels: ChatModel[] = [
     description: "Fast Tvivl model with tool use and multimodal input",
   },
   {
+    id: "gemini-3.6-flash",
+    name: "Gemini 3.6 Flash",
+    provider: "google",
+    description: "Gemini 3.6 Flash with tool use and multimodal input",
+  },
+  {
+    id: "gemini-3.5-flash-lite",
+    name: "Gemini 3.5 Flash Lite",
+    provider: "google",
+    description: "Lightweight, low-latency Gemini 3.5 model",
+  },
+  {
     id: antigravityAgentId,
     name: "Antigravity Agent",
     provider: "google-antigravity",

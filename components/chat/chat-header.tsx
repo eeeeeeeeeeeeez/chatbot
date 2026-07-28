@@ -40,7 +40,10 @@ function PureChatHeader({
         rel="noopener noreferrer"
         target="_blank"
       >
-        <i className="fa-solid fa-disease size-6 text-[24px] leading-none text-primary" />
+        <i
+          className="fa-solid fa-disease size-6 text-[24px] leading-none"
+          style={{ color: "#1a7f4e" }}
+        />
       </Link>
 
       {!isReadonly && (
@@ -56,7 +59,10 @@ function PureChatHeader({
         target="_blank"
         className="hidden items-center gap-3 px-3 py-1.5 transition-colors hover:opacity-80 md:ml-auto md:flex"
       >
-        <i className="fa-solid fa-disease size-7 text-[28px] leading-none text-primary" />
+        <i
+          className="fa-solid fa-disease size-7 text-[28px] leading-none"
+          style={{ color: "#1a7f4e" }}
+        />
         <span className="text-sm font-medium text-foreground">Hengbo AI</span>
       </Link>
     </header>

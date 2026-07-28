@@ -11,9 +11,9 @@ export const metadata: Metadata = {
   title: "Hengbo AI",
   description: "Hengbo AI 提供更快速、更智慧的 AI Agent 服務",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
+    icon: "/favicon.ico?v=3",
+    shortcut: "/favicon.ico?v=3",
+    apple: "/apple-touch-icon.png?v=3",
   },
 };
 

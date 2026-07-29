@@ -3,12 +3,14 @@ import { toast } from "sonner";
 import { Artifact } from "@/components/chat/create-artifact";
 import {
   CopyIcon,
+  DownloadIcon,
   LineChartIcon,
   RedoIcon,
   SparklesIcon,
   UndoIcon,
 } from "@/components/chat/icons";
 import { SpreadsheetEditor } from "@/components/chat/sheet-editor";
+import { downloadTextFile, toSafeFilename } from "@/lib/download-file";
 
 type Metadata = Record<string, never>;
 
@@ -80,6 +82,26 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
 
         navigator.clipboard.writeText(cleanedCsv);
         toast.success("已將 CSV 複製到剪貼簿！");
+      },
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      description: "下載檔案",
+      onClick: ({ content, title }) => {
+        const parsed = parse<string[]>(content, { skipEmptyLines: true });
+
+        const nonEmptyRows = parsed.data.filter((row) =>
+          row.some((cell) => cell.trim() !== "")
+        );
+
+        const cleanedCsv = unparse(nonEmptyRows);
+
+        downloadTextFile(
+          cleanedCsv,
+          `${toSafeFilename(title)}.csv`,
+          "text/csv"
+        );
+        toast.success("已下載檔案！");
       },
     },
   ],

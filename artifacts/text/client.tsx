@@ -5,6 +5,7 @@ import { DocumentSkeleton } from "@/components/chat/document-skeleton";
 import {
   ClockRewind,
   CopyIcon,
+  DownloadIcon,
   MessageIcon,
   PenIcon,
   RedoIcon,
@@ -12,6 +13,7 @@ import {
 } from "@/components/chat/icons";
 import { Editor } from "@/components/chat/text-editor";
 import type { Suggestion } from "@/lib/db/schema";
+import { downloadTextFile, toSafeFilename } from "@/lib/download-file";
 import { getSuggestions } from "../actions";
 
 type TextArtifactMetadata = {
@@ -148,6 +150,18 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
         toast.success("已複製到剪貼簿！");
+      },
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      description: "下載檔案",
+      onClick: ({ content, title }) => {
+        downloadTextFile(
+          content,
+          `${toSafeFilename(title)}.md`,
+          "text/markdown"
+        );
+        toast.success("已下載檔案！");
       },
     },
   ],

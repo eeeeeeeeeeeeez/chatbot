@@ -8,12 +8,14 @@ import {
 import { Artifact } from "@/components/chat/create-artifact";
 import {
   CopyIcon,
+  DownloadIcon,
   LogsIcon,
   MessageIcon,
   PlayIcon,
   RedoIcon,
   UndoIcon,
 } from "@/components/chat/icons";
+import { downloadTextFile, toSafeFilename } from "@/lib/download-file";
 import { generateUUID } from "@/lib/utils";
 
 const OUTPUT_HANDLERS = {
@@ -248,6 +250,18 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
         toast.success("已複製到剪貼簿！");
+      },
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      description: "下載檔案",
+      onClick: ({ content, title }) => {
+        downloadTextFile(
+          content,
+          `${toSafeFilename(title)}.py`,
+          "text/x-python"
+        );
+        toast.success("已下載檔案！");
       },
     },
   ],

@@ -80,10 +80,10 @@ export const imageArtifact = new Artifact({
     {
       icon: <DownloadIcon size={18} />,
       description: "下載檔案",
-      onClick: ({ content, title }) => {
+      onClick: ({ content }) => {
         downloadBase64File(
           content,
-          `${toSafeFilename(title)}.png`,
+          `image.png`,
           "image/png"
         );
         toast.success("已下載檔案！");

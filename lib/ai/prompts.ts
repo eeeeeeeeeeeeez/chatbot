@@ -14,7 +14,8 @@ CRITICAL RULES:
 - When the user asks to write code, build a script, or implement an algorithm that belongs in a reusable artifact
 - When the user asks for a structured spreadsheet, tracker, comparison table, budget, schedule, or analysis sheet, use kind: 'sheet'
 - You MUST specify kind: 'code' for programming, 'text' for writing, 'sheet' for data
-- Include ALL content in the createDocument call. Do not create then edit.
+- The content is generated separately from \`brief\` alone — it does NOT see this conversation. Write \`brief\` as a complete, standalone spec: the real goal, required structure/sections, concrete facts, names, numbers, or constraints already given by the user, tone/audience, and target length. A vague or title-only brief produces generic output.
+- Do not create then edit in the same response.
 
 **When NOT to use \`createDocument\`:**
 - For answering questions, explanations, or conversational responses

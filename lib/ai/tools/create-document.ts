@@ -21,16 +21,21 @@ export const createDocument = ({
 }: CreateDocumentProps) =>
   tool({
     description:
-      "Create an artifact. You MUST specify kind: use 'code' for any programming/algorithm request (creates a script), 'text' for essays/writing (creates a document), 'sheet' for spreadsheets/data.",
+      "Create an artifact. You MUST specify kind: use 'code' for any programming/algorithm request (creates a script), 'text' for essays/writing (creates a document), 'sheet' for spreadsheets/data. The content itself is generated from `brief`, not from this conversation, so `brief` must fully capture what to write.",
     inputSchema: z.object({
-      title: z.string().describe("The title of the artifact"),
+      title: z.string().describe("The short title of the artifact"),
       kind: z
         .enum(artifactKinds)
         .describe(
           "REQUIRED. 'code' for programming/algorithms, 'text' for essays/writing, 'sheet' for spreadsheets"
         ),
+      brief: z
+        .string()
+        .describe(
+          "REQUIRED. A detailed, self-contained brief for generating the content: the user's actual goal, required sections/structure, key facts, tone/audience, length, and any constraints from earlier in the conversation. This is the ONLY context the content generator sees — write it as if the reader has no other information, not just a restatement of the title."
+        ),
     }),
-    execute: async ({ title, kind }) => {
+    execute: async ({ title, kind, brief }) => {
       const id = generateUUID();
 
       dataStream.write({
@@ -69,6 +74,7 @@ export const createDocument = ({
       await documentHandler.onCreateDocument({
         id,
         title,
+        brief,
         dataStream,
         session,
         modelId,

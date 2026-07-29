@@ -1,6 +1,6 @@
 import type { UIMessageStreamWriter } from "ai";
-import { generateUUID } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
+import { generateUUID } from "@/lib/utils";
 import { antigravityAgentId } from "./models";
 
 const INTERACTIONS_API_URL =
@@ -48,7 +48,8 @@ const STEP_LABELS: Record<string, string> = {
 // code comments happen to be in another language. Pinning it here keeps
 // replies consistently in Traditional Chinese regardless of what the agent
 // reads or executes along the way.
-const ANTIGRAVITY_SYSTEM_INSTRUCTION = "你是 Hengbo AI 的 Antigravity 代理，運作於一個具備程式碼執行、網頁搜尋與檔案操作能力的沙盒環境。\n\n語言規則（最高優先，必須嚴格遵守）：\n- 一律使用「繁體中文」回覆使用者，不論使用者訊息、搜尋結果、程式碼註解、工具輸出或環境訊息使用何種語言。\n- 絕對不要切換成簡體中文或英文，除非使用者在訊息中明確要求你使用其他語言回覆。\n- 專有名詞、程式碼、指令、檔案路徑、函式庫名稱等可保留原文，但說明文字一律使用繁體中文。\n- 即使思考或執行工具時參考了英文資料，最終呈現給使用者的回覆內容仍必須是繁體中文。\n\n回覆風格：保持精簡、直接、可立即執行；優先提供具體結果、步驟或程式碼，而非空泛建議。";
+const ANTIGRAVITY_SYSTEM_INSTRUCTION =
+  "你是 Hengbo AI 的 Antigravity 代理，運作於一個具備程式碼執行、網頁搜尋與檔案操作能力的沙盒環境。\n\n語言規則（最高優先，必須嚴格遵守）：\n- 一律使用「繁體中文」回覆使用者，不論使用者訊息、搜尋結果、程式碼註解、工具輸出或環境訊息使用何種語言。\n- 絕對不要切換成簡體中文或英文，除非使用者在訊息中明確要求你使用其他語言回覆。\n- 專有名詞、程式碼、指令、檔案路徑、函式庫名稱等可保留原文，但說明文字一律使用繁體中文。\n- 即使思考或執行工具時參考了英文資料，最終呈現給使用者的回覆內容仍必須是繁體中文。\n\n回覆風格：保持精簡、直接、可立即執行；優先提供具體結果、步驟或程式碼，而非空泛建議。";
 
 function getApiKey(): string {
   const apiKey =
@@ -111,32 +112,59 @@ async function* parseSseEvents(
  * Runs the Antigravity managed agent for a single turn and streams its
  * output text into the given UI message stream writer.
  *
- * Note: unlike the standard chat models, this is a single-turn call using
- * only the latest user message as `input` — the Interactions API supports
- * multi-turn via `previous_interaction_id`, which isn't wired up yet.
+ * Conversation continuity uses the Interactions API's server-side state:
+ * pass the prior turn's interaction id as `previousInteractionId` and the
+ * server reconstructs the full history (including earlier file/document
+ * context) on its side. Without this, each turn was a blank-slate call
+ * with only the latest message and no memory of anything said or attached
+ * before it — the agent would then guess at or fabricate context it never
+ * received, which is what produced garbled/inconsistent replies.
  */
 export async function runAntigravityAgent({
   dataStream,
   input,
+  previousInteractionId,
 }: {
   dataStream: UIMessageStreamWriter<ChatMessage>;
   input: string;
+  previousInteractionId?: string;
 }): Promise<void> {
-  const response = await fetch(INTERACTIONS_API_URL, {
+  const requestBody: Record<string, unknown> = {
+    agent: antigravityAgentId,
+    input,
+    system_instruction: ANTIGRAVITY_SYSTEM_INSTRUCTION,
+    environment: "remote",
+    stream: true,
+  };
+  if (previousInteractionId) {
+    requestBody.previous_interaction_id = previousInteractionId;
+  }
+
+  let response = await fetch(INTERACTIONS_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-goog-api-key": getApiKey(),
       "Api-Revision": API_REVISION,
     },
-    body: JSON.stringify({
-      agent: antigravityAgentId,
-      input,
-      system_instruction: ANTIGRAVITY_SYSTEM_INSTRUCTION,
-      environment: "remote",
-      stream: true,
-    }),
+    body: JSON.stringify(requestBody),
   });
+
+  // A referenced interaction can fall outside the API's retention window
+  // (1 day on the free tier) and get rejected. Rather than surfacing that
+  // as a hard error, retry once as a fresh, stateless turn.
+  if (!response.ok && previousInteractionId) {
+    const { previous_interaction_id: _omit, ...retryBody } = requestBody;
+    response = await fetch(INTERACTIONS_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": getApiKey(),
+        "Api-Revision": API_REVISION,
+      },
+      body: JSON.stringify(retryBody),
+    });
+  }
 
   if (!response.ok || !response.body) {
     const errorText = await response.text().catch(() => "");
@@ -158,6 +186,15 @@ export async function runAntigravityAgent({
 
   for await (const event of parseSseEvents(response.body)) {
     switch (event.event_type) {
+      case "interaction.created": {
+        // Persisted (non-transient) so it lands in the saved message's
+        // parts and can be read back as `previousInteractionId` next turn.
+        dataStream.write({
+          type: "data-antigravity-interaction-id",
+          data: event.interaction.id,
+        });
+        break;
+      }
       case "step.start": {
         const label = STEP_LABELS[event.step.type];
         if (label) {
@@ -166,7 +203,10 @@ export async function runAntigravityAgent({
         break;
       }
       case "step.delta": {
-        if (event.delta.type === "text" && typeof event.delta.text === "string") {
+        if (
+          event.delta.type === "text" &&
+          typeof event.delta.text === "string"
+        ) {
           ensureTextStarted();
           sawAnyText = true;
           dataStream.write({

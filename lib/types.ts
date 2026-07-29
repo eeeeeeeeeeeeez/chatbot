@@ -41,6 +41,7 @@ export type CustomUIDataTypes = {
   finish: null;
   "chat-title": string;
   "agent-status": string;
+  "antigravity-interaction-id": string;
 };
 
 export type ChatMessage = UIMessage<

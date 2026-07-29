@@ -124,3 +124,27 @@ export function getTextFromMessage(message: ChatMessage | UIMessage): string {
     .map((part) => (part as { type: 'text'; text: string}).text)
     .join('');
 }
+
+/**
+ * Finds the most recent Antigravity interaction id recorded in message
+ * history, so a follow-up turn can chain onto it via `previous_interaction_id`
+ * instead of starting from a blank slate with no memory of prior turns or
+ * attached files.
+ */
+export function getLastAntigravityInteractionId(
+  messages: ChatMessage[]
+): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.role !== 'assistant') {
+      continue;
+    }
+    for (let j = message.parts.length - 1; j >= 0; j--) {
+      const part = message.parts[j];
+      if (part.type === 'data-antigravity-interaction-id') {
+        return (part as { type: 'data-antigravity-interaction-id'; data: string }).data;
+      }
+    }
+  }
+  return undefined;
+}

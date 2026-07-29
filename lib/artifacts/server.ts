@@ -19,6 +19,7 @@ export type SaveDocumentProps = {
 export type CreateDocumentCallbackProps = {
   id: string;
   title: string;
+  brief: string;
   dataStream: UIMessageStreamWriter<ChatMessage>;
   session: Session;
   modelId: string;
@@ -49,6 +50,7 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
       const draftContent = await config.onCreateDocument({
         id: args.id,
         title: args.title,
+        brief: args.brief,
         dataStream: args.dataStream,
         session: args.session,
         modelId: args.modelId,

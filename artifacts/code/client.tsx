@@ -255,10 +255,10 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     {
       icon: <DownloadIcon size={18} />,
       description: "下載檔案",
-      onClick: ({ content, title }) => {
+      onClick: ({ content }) => {
         downloadTextFile(
           content,
-          `${toSafeFilename(title)}.py`,
+          `code.py`,
           "text/x-python"
         );
         toast.success("已下載檔案！");

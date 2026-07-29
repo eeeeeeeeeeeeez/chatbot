@@ -11,8 +11,8 @@ import { checkBotId } from "botid/server";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
-import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { runAntigravityAgent } from "@/lib/ai/antigravity";
+import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import {
   allowedModelIds,
   DEFAULT_CHAT_MODEL,
@@ -45,6 +45,7 @@ import type { ChatMessage } from "@/lib/types";
 import {
   convertToUIMessages,
   generateUUID,
+  getLastAntigravityInteractionId,
   getTextFromMessage,
 } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
@@ -205,11 +206,15 @@ export async function POST(request: Request) {
           const latestUserMessage = [...uiMessages]
             .reverse()
             .find((m) => m.role === "user");
+          const previousInteractionId = getLastAntigravityInteractionId(
+            uiMessages.slice(0, -1)
+          );
           await runAntigravityAgent({
             dataStream,
             input: latestUserMessage
               ? getTextFromMessage(latestUserMessage)
               : "",
+            previousInteractionId,
           });
 
           if (titlePromise) {

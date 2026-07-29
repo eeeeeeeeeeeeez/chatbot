@@ -155,10 +155,10 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     {
       icon: <DownloadIcon size={18} />,
       description: "下載檔案",
-      onClick: ({ content, title }) => {
+      onClick: ({ content }) => {
         downloadTextFile(
           content,
-          `${toSafeFilename(title)}.md`,
+          `text.md`,
           "text/markdown"
         );
         toast.success("已下載檔案！");

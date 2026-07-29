@@ -87,7 +87,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     {
       icon: <DownloadIcon size={18} />,
       description: "下載檔案",
-      onClick: ({ content, title }) => {
+      onClick: ({ content }) => {
         const parsed = parse<string[]>(content, { skipEmptyLines: true });
 
         const nonEmptyRows = parsed.data.filter((row) =>
@@ -98,7 +98,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
 
         downloadTextFile(
           cleanedCsv,
-          `${toSafeFilename(title)}.csv`,
+          `sheet.csv`,
           "text/csv"
         );
         toast.success("已下載檔案！");
